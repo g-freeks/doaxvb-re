@@ -106,7 +106,7 @@ int main(void)
                the bottom, the seven others down the side. */
             *recomp_memory(PLAYING_CHARACTER, 1) = 13u;
             *recomp_memory(CHARACTER_GIRLS + 12u, 1) = 4u;
-            fill_shop_panel(&panel, TEST_ITEM);
+            fill_shop_panel(&panel, TEST_ITEM, &SHOP_PREVIEW);
             CHECK(panel.icon_count == 2u + GIRL_COUNT - 1u);
             CHECK(panel.icon[0].image == RECOMP_ICON_HEART && panel.icon[0].alpha == 1.0f);
             CHECK(panel.icon[1].image == RECOMP_ICON_PRESENT && panel.icon[1].alpha == 0.25f);
@@ -115,7 +115,7 @@ int main(void)
             memset(recomp_memory(TEST_LIVE, GIRL_COUNT * LIVE_STRIDE), 0xFF, GIRL_COUNT * LIVE_STRIDE);
             *recomp_memory_u32(LIVE_INVENTORIES) = TEST_LIVE;
             *recomp_memory_u16(TEST_LIVE + 4u * LIVE_STRIDE + 18u * LIVE_RECORD) = TEST_ITEM;
-            fill_shop_panel(&panel, TEST_ITEM);
+            fill_shop_panel(&panel, TEST_ITEM, &SHOP_PREVIEW);
             CHECK(panel.icon[1].alpha == 1.0f && holds(4, TEST_ITEM) && !holds(6, TEST_ITEM));
             /* The log follows the live records too: one slot changed. */
             recomp_collection_log_frame();

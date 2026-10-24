@@ -10,6 +10,12 @@ shops show it over the item preview with the game's own icons:
 - Down the right edge, the other seven girls' portraits, each lit when the
   item is in her Collection.
 
+The same panel shows on the items screen, when choosing a present to give
+at the hotel (with what is inside it) and in the Collection. Click the left
+thumbstick to also show how each girl reacts to the item as a
+present, `++` love to `--` hate, beside her portrait; another click hides them
+(see [`gift-reactions.md`](gift-reactions.md)).
+
 An unlit icon is three quarters transparent. The icons come from the game
 disc when the panel first shows. The Direct3D 11 presenter, the default on
 Windows, shows the same as two lines of text along the bottom of the screen

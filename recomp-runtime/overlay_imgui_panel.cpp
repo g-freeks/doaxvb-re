@@ -2,6 +2,9 @@
 
 #include "imgui.h"
 
+#include <cfloat>
+#include <initializer_list>
+
 namespace {
 
 /* The panel's text is sized for the target's height, as the game's own is:
@@ -61,6 +64,24 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
             const float alpha = icon.alpha < 0.0f ? 0.0f : icon.alpha > 1.0f ? 1.0f : icon.alpha;
             list->AddImage(icons[icon.image], low, high, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f),
                 IM_COL32(255, 255, 255, static_cast<int>(alpha * 255.0f + 0.5f)));
+            if (icon.label[0] != '\0') {
+                /* Green for "+" and "++", red for "-" and "--", twice the
+                   text's size and outlined so it reads on any background. */
+                ImFont *font = ImGui::GetFont();
+                const float font_size = ImGui::GetFontSize() * 2.0f;
+                const ImVec2 size_text = font->CalcTextSizeA(font_size, FLT_MAX, 0.0f, icon.label);
+                const float gap = 3.0f * scale;
+                const ImVec2 at(icon.label_left ? low.x - gap - size_text.x : high.x + gap,
+                    (low.y + high.y - size_text.y) * 0.5f);
+                const ImU32 colour = icon.label[0] == '+' ? IM_COL32(90, 255, 140, 255) : IM_COL32(255, 90, 80, 255);
+                const float edge = 1.5f * scale;
+                for (const ImVec2 offset : {ImVec2(-edge, 0.0f), ImVec2(edge, 0.0f), ImVec2(0.0f, -edge),
+                         ImVec2(0.0f, edge)}) {
+                    list->AddText(font, font_size, ImVec2(at.x + offset.x, at.y + offset.y), IM_COL32(0, 0, 0, 230),
+                        icon.label);
+                }
+                list->AddText(font, font_size, at, colour, icon.label);
+            }
         }
     }
     /* Icons stand in for the hint that describes them. */

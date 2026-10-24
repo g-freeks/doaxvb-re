@@ -62,7 +62,7 @@ bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, f
     float size, float alpha)
 {
     if (text == NULL || text->icon_count >= RECOMP_OVERLAY_ICONS) return false;
-    text->icon[text->icon_count++] = (RecompOverlayIcon){image, x, shift, y, size, alpha};
+    text->icon[text->icon_count++] = (RecompOverlayIcon){image, x, shift, y, size, alpha, "", false};
     return true;
 }
 
@@ -90,6 +90,14 @@ bool recomp_overlay_add_key(RecompOverlayKeys *keys, unsigned image, const char 
     copy_text(key->action, sizeof key->action, action);
     copy_text(key->detail, sizeof key->detail, detail);
     return true;
+}
+
+void recomp_overlay_label_icon(RecompOverlayText *text, const char *label, bool left)
+{
+    if (text == NULL || text->icon_count == 0u) return;
+    RecompOverlayIcon *icon = &text->icon[text->icon_count - 1u];
+    copy_text(icon->label, sizeof icon->label, label);
+    icon->label_left = left;
 }
 
 bool recomp_overlay_empty(const RecompOverlayText *text)

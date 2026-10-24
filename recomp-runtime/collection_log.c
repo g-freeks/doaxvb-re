@@ -1,6 +1,7 @@
 #include "collection_log.h"
 
 #ifdef RECOMP_FULL_PROGRAM
+#include "gift_reactions.h"
 #include "island_icons.h"
 #include "kernel_abi.h"
 #include "overlay_text.h"
@@ -86,12 +87,50 @@ enum {
     SHOP_GRACE_FRAMES = 30,
     PLAYING_CHARACTER = 0x009D9939u,
     CHARACTER_GIRLS = 0x000EF394u,
-    CHARACTER_COUNT = 20
+    CHARACTER_COUNT = 20,
+    /* Buttons held on any controller (docs/title-idle.md); a click of the
+       left thumbstick toggles the gift reactions. */
+    BUTTONS_HELD = 0x005F3138u,
+    BUTTON_LEFT_THUMB = 0x0040u,
+    /* The item grids (the items screen's tabs, a gift's presents) list
+       inventory slots: list t has s8 GRID_COUNTS[t] entries starting at
+       u8 GRID_STARTS[t] in the slot table GRID_SLOTS; GRID_LIST is the list
+       on screen and GRID_CURSOR its cursor. 0x000E12B0 reads them so. */
+    GRID_LIST = 0x00B5B209u,
+    GRID_COUNTS = 0x00B5B1A8u,
+    GRID_STARTS = 0x00B5B1B7u,
+    GRID_SLOTS = 0x00B5B148u,
+    GRID_SLOT_COUNT = 0x30,
+    GRID_LISTS = 15,
+    GRID_CURSOR = 0x0031BE04u,
+    /* The Collection lists item ids: tab t's start is the word at
+       CATALOG_STARTS + 4t into the words at CATALOG (0x000C3430). */
+    CATALOG_STARTS = 0x009D5B28u,
+    CATALOG = 0x009D5B34u,
+    CATALOG_TABS = 3,
+    COLLECTION_TAB = 0x0031CC7Du,
+    COLLECTION_CURSOR = 0x0031CE0Cu,
+    SCENE = 0x005DECE0u,
+    SCENE_ISLAND = 1,
+    ISLAND_PLACE = 0x004D72E3u,
+    PLACE_COLLECTION = 6
 };
 
-/* The shop's preview, in the game's 720 x 480 screen space. */
-static const float PREVIEW_LEFT = 391.5f, PREVIEW_TOP = 35.5f, PREVIEW_RIGHT = 663.5f,
-                   PREVIEW_BOTTOM = 299.5f, SCREEN_WIDTH = 720.0f, SCREEN_HEIGHT = 480.0f;
+/* Whether the panel shows each girl's reaction to the item as a present,
+   from gift_reactions.c. Hidden at first; a left thumbstick click shows
+   and hides it. */
+static bool reactions_shown;
+
+/* A screen's item preview, in the game's 720 x 480 screen space: the
+   shop's, which the items screen and a gift's choice of present share, and
+   the Collection's smaller one. The panel's icons go inside it. */
+typedef struct PreviewBox {
+    float left, top, right, bottom;
+} PreviewBox;
+
+static const PreviewBox SHOP_PREVIEW = {391.5f, 35.5f, 663.5f, 299.5f};
+static const PreviewBox COLLECTION_PREVIEW = {453.5f, 85.5f, 647.5f, 297.5f};
+static const float SCREEN_WIDTH = 720.0f, SCREEN_HEIGHT = 480.0f;
 
 typedef struct InventorySlot {
     uint16_t item;
@@ -108,6 +147,8 @@ static uint32_t shop_object;
 static bool shop_noted;
 static unsigned shop_frame;
 static int shop_item = -1;
+static unsigned grid_frame;
+static bool grid_noted;
 
 static bool setting(const char *name, int *cache)
 {
@@ -372,6 +413,65 @@ static int shop_selection(unsigned *shop, unsigned *cursor)
     return item < ITEM_COUNT ? item : -1;
 }
 
+static int playing_girl(void);
+
+void recomp_collection_note_grid(void)
+{
+    grid_noted = true;
+}
+
+/* The item in the grid cell under the cursor, or -1 when there is none;
+   for a present, the item inside it, not its wrapping. The grid stays open
+   while its preview was queued within the last few frames. */
+static int grid_item(unsigned *list, unsigned *cursor)
+{
+    int count;
+    unsigned index;
+    int playing;
+
+    if (grid_noted) {
+        grid_frame = frame;
+        grid_noted = false;
+    }
+    if (grid_frame == 0u || frame - grid_frame > SHOP_GRACE_FRAMES) {
+        return -1;
+    }
+    *list = *recomp_memory(GRID_LIST, 1);
+    *cursor = *recomp_memory_u16(GRID_CURSOR);
+    playing = playing_girl();
+    if (*list >= GRID_LISTS || playing < 0) {
+        return -1;
+    }
+    count = (int8_t)*recomp_memory(GRID_COUNTS + *list, 1);
+    if ((int)*cursor >= count) {
+        return -1;
+    }
+    index = *recomp_memory(GRID_STARTS + *list, 1) + *cursor;
+    if (index >= GRID_SLOT_COUNT) {
+        index = 0;
+    }
+    const uint16_t item = *recomp_memory_u16(slot_address((unsigned)playing,
+                                                          *recomp_memory(GRID_SLOTS + index, 1)));
+    return item < ITEM_COUNT ? item : -1;
+}
+
+/* The item under the Collection's cursor, or -1 off that screen. */
+static int collection_item(unsigned *tab, unsigned *cursor)
+{
+    uint16_t item;
+
+    if (*recomp_memory(SCENE, 1) != SCENE_ISLAND || *recomp_memory(ISLAND_PLACE, 1) != PLACE_COLLECTION) {
+        return -1;
+    }
+    *tab = *recomp_memory(COLLECTION_TAB, 1);
+    *cursor = *recomp_memory_u16(COLLECTION_CURSOR);
+    if (*tab >= CATALOG_TABS) {
+        return -1;
+    }
+    item = *recomp_memory_u16(CATALOG + (*recomp_memory_u16(CATALOG_STARTS + *tab * 4u) + *cursor) * 2u);
+    return item < ITEM_COUNT ? item : -1;
+}
+
 /* The item under the shop cursor this frame, or -1 while no shop is open.
    A shop stays open while its row draw ran within the last few frames. */
 static int open_shop_item(unsigned *shop, unsigned *cursor)
@@ -428,34 +528,43 @@ static void add_icon(RecompOverlayText *text, unsigned image, float x, float shi
                             size / SCREEN_HEIGHT, active ? 1.0f : 0.25f);
 }
 
-static void add_shop_icons(RecompOverlayText *text, uint16_t item)
+static void add_shop_icons(RecompOverlayText *text, uint16_t item, const PreviewBox *box)
 {
     const int playing = playing_girl();
     const float margin = 8.0f, gap = 4.0f;
-    const float size = playing >= 0 ? 32.0f : 28.0f;
-    float y = PREVIEW_TOP + margin;
+    /* Seven portraits down the edge, smaller when the preview is short. */
+    const float fit = (box->bottom - box->top - 2.0f * margin - 6.0f * gap) / 7.0f;
+    const float size = playing >= 0 ? (fit < 32.0f ? fit : 32.0f) : 28.0f;
+    float y = box->top + margin;
 
     if (playing >= 0) {
-        const float row = 28.0f, top = PREVIEW_BOTTOM - margin - row;
+        const float row = size < 28.0f ? size : 28.0f, top = box->bottom - margin - row;
 
-        add_icon(text, RECOMP_ICON_HEART, PREVIEW_LEFT, margin, top, row,
+        add_icon(text, RECOMP_ICON_HEART, box->left, margin, top, row,
                  (ownership(item, (unsigned)playing) & IN_COLLECTION) != 0u);
-        add_icon(text, RECOMP_ICON_PRESENT, PREVIEW_LEFT, margin + row + gap, top, row,
+        add_icon(text, RECOMP_ICON_PRESENT, box->left, margin + row + gap, top, row,
                  holds((unsigned)playing, item));
+        if (reactions_shown) {
+            recomp_overlay_label_icon(text, recomp_gift_reaction_mark(recomp_gift_reaction(item, (unsigned)playing)),
+                false);
+        }
     }
     for (unsigned girl = 0; girl < GIRL_COUNT; ++girl) {
         if ((int)girl == playing) {
             continue;
         }
-        add_icon(text, RECOMP_ICON_PORTRAIT + girl, PREVIEW_RIGHT, -margin - size, y, size,
+        add_icon(text, RECOMP_ICON_PORTRAIT + girl, box->right, -margin - size, y, size,
                  (ownership(item, girl) & IN_COLLECTION) != 0u);
+        if (reactions_shown) {
+            recomp_overlay_label_icon(text, recomp_gift_reaction_mark(recomp_gift_reaction(item, girl)), true);
+        }
         y += size + gap;
     }
 }
 
 /* Two centred lines: the item's name, then which girls have it in their
    Collection, which have only had it, and whose room holds it now. */
-static void fill_shop_panel(RecompOverlayText *text, uint16_t item)
+static void fill_shop_panel(RecompOverlayText *text, uint16_t item, const PreviewBox *box)
 {
     char name[64], collection[96] = "", had[96] = "", room[96] = "";
     char hint[RECOMP_OVERLAY_HINT_SIZE];
@@ -488,9 +597,28 @@ static void fill_shop_panel(RecompOverlayText *text, uint16_t item)
             }
         }
     }
+    if (reactions_shown) {
+        /* A third line for a presenter without icons: each girl with a
+           reaction, loves first. */
+        char reactions[160] = "";
+
+        for (int reaction = 2; reaction >= -2; --reaction) {
+            for (unsigned girl = 0; girl < GIRL_COUNT && reaction != 0; ++girl) {
+                if (recomp_gift_reaction(item, girl) == reaction) {
+                    char entry[24];
+
+                    snprintf(entry, sizeof entry, "%s %s", recomp_gift_reaction_mark(reaction), girl_name(girl));
+                    add_name(reactions, sizeof reactions, entry);
+                }
+            }
+        }
+        used = strlen(hint);
+        snprintf(hint + used, sizeof hint - used, "\n%s", reactions[0] != '\0' ? reactions : "No reactions known");
+    }
     recomp_overlay_clear(text);
     recomp_overlay_set_hint(text, hint);
-    add_shop_icons(text, item);
+    recomp_overlay_set_key_tip(&text->keys, "LS", reactions_shown ? "click: hide reactions" : "click: reactions");
+    add_shop_icons(text, item, box);
 }
 
 /* With the log on, one line for what the panel now shows: its text, with
@@ -527,19 +655,33 @@ static void log_panel(const RecompOverlayText *text)
         }
         separator = ",";
     }
-    fprintf(stderr, "%s\n", separator[0] == '\0' ? " none" : "");
+    fprintf(stderr, "%s", separator[0] == '\0' ? " none" : "");
+    /* The reactions shown beside the icons, by girl; the playing girl's
+       sits beside the present. */
+    separator = "; reactions:";
+    for (unsigned i = 0; i < text->icon_count; ++i) {
+        const RecompOverlayIcon *icon = &text->icon[i];
+
+        if (icon->label[0] != '\0') {
+            fprintf(stderr, "%s %s %s", separator,
+                    icon->image == RECOMP_ICON_PRESENT ? "playing" : girl_name(icon->image - RECOMP_ICON_PORTRAIT),
+                    icon->label);
+            separator = ",";
+        }
+    }
+    fputc('\n', stderr);
 }
 
 /* Publishes the panel when it changes, and an empty one once the shop
    closes. Ownership can change under a fixed cursor, as when buying. */
-static void show_shop_panel(int item)
+static void show_shop_panel(int item, const PreviewBox *box)
 {
     static RecompOverlayText shown;
     RecompOverlayText text;
 
     if (item >= 0) {
         recomp_island_icons_publish(recomp_disc_root_path);
-        fill_shop_panel(&text, (uint16_t)item);
+        fill_shop_panel(&text, (uint16_t)item, box);
     } else {
         recomp_overlay_clear(&text);
     }
@@ -561,6 +703,7 @@ void recomp_collection_note_shop(uint32_t shop)
 void recomp_collection_log_frame(void)
 {
     unsigned shop = 0, cursor = 0;
+    const PreviewBox *box = &SHOP_PREVIEW;
     int item;
 
     if (!log_enabled() && !panel_enabled()) {
@@ -573,15 +716,43 @@ void recomp_collection_log_frame(void)
         have_previous = true;
     }
     item = open_shop_item(&shop, &cursor);
-    if (log_enabled() && item >= 0 && item != shop_item) {
-        log_shop(item, shop, cursor);
+    if (item >= 0) {
+        if (log_enabled() && item != shop_item) {
+            log_shop(item, shop, cursor);
+        }
+    } else {
+        /* The same panel over the items screen, a gift's presents and the
+           Collection, whose previews sit where the shop's does. */
+        unsigned list = 0;
+        const char *source = "grid list";
+
+        item = grid_item(&list, &cursor);
+        if (item < 0) {
+            item = collection_item(&list, &cursor);
+            source = "collection tab";
+            box = &COLLECTION_PREVIEW;
+        }
+        if (log_enabled() && item >= 0 && item != shop_item) {
+            char name[64];
+
+            fprintf(stderr, "[auto:collection] frame %u: %s %u cursor %u: item %d %s\n", frame, source, list, cursor,
+                    item, item_name((uint16_t)item, name, sizeof name));
+        }
     }
     shop_item = item;
     if (panel_enabled()) {
-        show_shop_panel(item);
+        static bool click_was_down;
+        const bool click_down = (*recomp_memory_u32(BUTTONS_HELD) & BUTTON_LEFT_THUMB) != 0u;
+
+        if (click_down && !click_was_down && item >= 0) {
+            reactions_shown = !reactions_shown;
+        }
+        click_was_down = click_down;
+        show_shop_panel(item, box);
     }
 }
 #else
 void recomp_collection_note_shop(uint32_t shop) { (void)shop; }
+void recomp_collection_note_grid(void) {}
 void recomp_collection_log_frame(void) {}
 #endif

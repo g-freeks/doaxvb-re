@@ -27,11 +27,15 @@ enum {
    fraction of the picture's width and y of its height; the icon stays
    square, its size a fraction of the height. The left edge is x plus shift,
    a fraction of the height: a shift of -size puts the right edge on x, and
-   icons in a row are a size apart whatever the stretch. */
+   icons in a row are a size apart whatever the stretch. A label, such as a
+   gift reaction's "++", is drawn beside the icon: to its left when
+   label_left, else to its right. */
 typedef struct RecompOverlayIcon {
     unsigned image;
     float x, shift, y, size;
     float alpha;
+    char label[4];
+    bool label_left;
 } RecompOverlayIcon;
 
 /* A button and what it does: one row of the key panel at the picture's
@@ -87,6 +91,8 @@ void recomp_overlay_set_hint(RecompOverlayText *text, const char *hint);
    draw icons shows the hint instead, so give icons a hint to fall back on. */
 bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, float shift, float y,
     float size, float alpha);
+/* Labels the icon added last; nothing when there is none. */
+void recomp_overlay_label_icon(RecompOverlayText *text, const char *label, bool left);
 void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool busy);
 /* Sets the bottom left reminder; empty texts remove it. */
 void recomp_overlay_set_key_tip(RecompOverlayKeys *keys, const char *key, const char *tip);

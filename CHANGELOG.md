@@ -4,6 +4,14 @@
 
 ### Added
 
+- **Gift reactions**. With **Extra overlays** (below), the collection panel
+  also shows on the items screen, the hotel's gift screen (with what is
+  inside the present) and the Collection. A left thumbstick click shows
+  beside each girl's portrait how she reacts to the item as a present:
+  `++` love, `+` like, `-` dislike, `--` hate, from the GameFAQs Item
+  Reactions FAQ, matched to the game's item ids. Hidden at first; a small
+  **LS · click: reactions** reminder says how to show it. See
+  `docs/gift-reactions.md`.
 - **Button hint**. With **Extra overlays** (below), a volleyball match you
   play and the Hopping game show a small **Back · Controls** reminder; Back
   shows which button does what, with the game's own A, B, X and Y buttons
