@@ -80,6 +80,45 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
         }
         ImGui::End();
     }
+    if (text.keys.count != 0u) {
+        /* At the picture's right edge, ending above the line the game's
+           subtitles and the notice use: a line a key, its button (or its
+           name in a button-sized space), its action and, dimmer, its
+           detail. */
+        const RecompOverlayPicture whole{0.0f, 0.0f, width, height};
+        const RecompOverlayPicture &area = picture != nullptr ? *picture : whole;
+        ImGui::SetNextWindowPos(ImVec2(area.x + area.width - kMargin * scale, area.y + area.height * 0.85f), 0,
+            ImVec2(1.0f, 1.0f));
+        ImGui::SetNextWindowBgAlpha(0.45f);
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f * scale, 1.0f * scale));
+        ImGui::Begin("recomp-overlay-keys", nullptr, flags);
+        const float button = ImGui::GetTextLineHeight() * 2.0f;
+        for (unsigned i = 0u; i < text.keys.count; ++i) {
+            const RecompOverlayKey &key = text.keys.key[i];
+            if (icons != nullptr && key.image < RECOMP_ICON_COUNT && icons[key.image] != ImTextureID{}) {
+                /* The game's button glyphs fill the middle of their 64-pixel
+                   textures, from texel 14 to 53 across. */
+                ImGui::Image(icons[key.image], ImVec2(button, button), ImVec2(13.0f / 64.0f, 13.0f / 64.0f),
+                    ImVec2(54.0f / 64.0f, 54.0f / 64.0f));
+            } else {
+                const ImVec2 at = ImGui::GetCursorScreenPos();
+                const ImVec2 size = ImGui::CalcTextSize(key.name);
+                ImGui::Dummy(ImVec2(button, button));
+                ImGui::GetWindowDrawList()->AddText(
+                    ImVec2(at.x + (button - size.x) * 0.5f, at.y + (button - size.y) * 0.5f),
+                    IM_COL32(255, 255, 255, 255), key.name);
+            }
+            const float centre = (button - ImGui::GetTextLineHeight()) * 0.5f;
+            ImGui::SameLine();
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + centre);
+            ImGui::TextColored(ImVec4(0.35f, 1.0f, 0.55f, 1.0f), "%s", key.action);
+            ImGui::SameLine();
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + centre);
+            ImGui::TextColored(ImVec4(0.85f, 0.92f, 1.0f, 0.8f), "%s", key.detail);
+        }
+        ImGui::End();
+        ImGui::PopStyleVar();
+    }
     if (text.notice[0] != '\0') {
         /* A pill in the picture's bottom right corner, glass and green like
            the game's own panels; a busy notice leads with a turning arc. */

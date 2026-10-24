@@ -7,7 +7,8 @@ the game and over the shop panel. Once it has shown, quitting keeps
 everything up to that point. It is one of the extra overlays, off by
 default: tick **Extra overlays** in the launcher, or set
 `RECOMP_EXTRA_OVERLAYS=1`, which also turns on the
-[shops' collection panel](collection-log.md).
+[shops' collection panel](collection-log.md) and the
+[button hint](button-hint.md).
 
 A save that is still running shows **Saving...** with a turning mark. In the
 saves seen so far the game writes its profile within a single frame, so only

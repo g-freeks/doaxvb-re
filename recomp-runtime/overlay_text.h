@@ -18,6 +18,8 @@ enum {
     RECOMP_OVERLAY_LINES = 8,
     RECOMP_OVERLAY_LINE_SIZE = 96,
     RECOMP_OVERLAY_HINT_SIZE = 320,
+    RECOMP_OVERLAY_KEYS = 8,
+    RECOMP_OVERLAY_KEY_SIZE = 48,
 };
 
 /* An icon from island_icons.h placed over the game's picture. The game
@@ -32,6 +34,23 @@ typedef struct RecompOverlayIcon {
     float alpha;
 } RecompOverlayIcon;
 
+/* A button and what it does: one row of the key panel at the picture's
+   right edge, above the game's subtitles and the notice. image is an
+   island_icons.h button, or RECOMP_ICON_COUNT for none; name stands in for the image when there is none or a presenter
+   cannot draw icons. action is the game's name for it, detail a short
+   explanation. */
+typedef struct RecompOverlayKey {
+    unsigned image;
+    char name[8];
+    char action[RECOMP_OVERLAY_KEY_SIZE];
+    char detail[RECOMP_OVERLAY_KEY_SIZE];
+} RecompOverlayKey;
+
+typedef struct RecompOverlayKeys {
+    RecompOverlayKey key[RECOMP_OVERLAY_KEYS];
+    unsigned count;
+} RecompOverlayKeys;
+
 typedef struct RecompOverlayText {
     char title[RECOMP_OVERLAY_LINE_SIZE];
     char line[RECOMP_OVERLAY_LINES][RECOMP_OVERLAY_LINE_SIZE];
@@ -43,6 +62,7 @@ typedef struct RecompOverlayText {
        save indicator's; busy draws it with a turning mark. */
     char notice[RECOMP_OVERLAY_LINE_SIZE];
     bool notice_busy;
+    RecompOverlayKeys keys;
 } RecompOverlayText;
 
 /* Whether the player asked for the extra overlays, the shop's ownership
@@ -62,6 +82,9 @@ void recomp_overlay_set_hint(RecompOverlayText *text, const char *hint);
 bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, float shift, float y,
     float size, float alpha);
 void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool busy);
+/* Adds a key row; false past RECOMP_OVERLAY_KEYS. Long texts are cut. */
+bool recomp_overlay_add_key(RecompOverlayKeys *keys, unsigned image, const char *name, const char *action,
+    const char *detail);
 bool recomp_overlay_empty(const RecompOverlayText *text);
 
 /* The game side hands a finished overlay over once a frame; a presenter,
@@ -75,6 +98,9 @@ void recomp_overlay_publish_status(const RecompOverlayText *text);
 /* The corner notice, kept apart from both overlays above and added to
    whichever is taken, so it shows over a panel too. NULL or "" removes it. */
 void recomp_overlay_publish_notice(const char *notice, bool busy);
+/* The key panel, kept apart like the notice and added to whichever overlay
+   is taken. An empty one removes it. */
+void recomp_overlay_publish_keys(const RecompOverlayKeys *keys);
 
 /* The images icons refer to, handed over once by the game side, which reads
    them from the disc; a presenter uploads them when it first draws an icon.

@@ -73,15 +73,28 @@ void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool
     text->notice_busy = text->notice[0] != '\0' && busy;
 }
 
+bool recomp_overlay_add_key(RecompOverlayKeys *keys, unsigned image, const char *name, const char *action,
+    const char *detail)
+{
+    if (keys == NULL || keys->count >= RECOMP_OVERLAY_KEYS) return false;
+    RecompOverlayKey *key = &keys->key[keys->count++];
+    key->image = image;
+    copy_text(key->name, sizeof key->name, name);
+    copy_text(key->action, sizeof key->action, action);
+    copy_text(key->detail, sizeof key->detail, detail);
+    return true;
+}
+
 bool recomp_overlay_empty(const RecompOverlayText *text)
 {
     return text == NULL || (text->title[0] == '\0' && text->count == 0u && text->hint[0] == '\0' &&
-        text->icon_count == 0u && text->notice[0] == '\0');
+        text->icon_count == 0u && text->notice[0] == '\0' && text->keys.count == 0u);
 }
 
 static RecompOverlayText published, status;
 static char notice[RECOMP_OVERLAY_LINE_SIZE];
 static bool notice_busy;
+static RecompOverlayKeys keys;
 #ifdef _WIN32
 static volatile LONG published_lock;
 #else
@@ -134,6 +147,17 @@ void recomp_overlay_publish_notice(const char *text, bool busy)
     unlock();
 }
 
+void recomp_overlay_publish_keys(const RecompOverlayKeys *published_keys)
+{
+    lock();
+    if (published_keys != NULL) {
+        keys = *published_keys;
+    } else {
+        memset(&keys, 0, sizeof keys);
+    }
+    unlock();
+}
+
 static const RecompIconImage *icon_images;
 
 void recomp_overlay_set_icon_images(const RecompIconImage *images)
@@ -161,5 +185,6 @@ void recomp_overlay_take(RecompOverlayText *text)
         memcpy(text->notice, notice, sizeof notice);
         text->notice_busy = notice_busy;
     }
+    if (keys.count != 0u) text->keys = keys;
     unlock();
 }

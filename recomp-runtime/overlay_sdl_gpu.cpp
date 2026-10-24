@@ -149,7 +149,7 @@ void recomp_overlay_sdl_gpu_draw(SDL_GPUDevice *device, SDL_Window *window,
     io.DeltaTime = now > last_ticks ? static_cast<float>(now - last_ticks) / 1000.0f : 1.0f / 60.0f;
     last_ticks = now;
 
-    const bool icons = text->icon_count != 0u && upload_icons(device, command_buffer);
+    const bool icons = (text->icon_count != 0u || text->keys.count != 0u) && upload_icons(device, command_buffer);
     const RecompOverlayPicture picture{picture_x, picture_y, picture_width, picture_height};
 
     ImGui_ImplSDLGPU3_NewFrame();

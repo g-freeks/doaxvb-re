@@ -493,23 +493,6 @@ static void fill_shop_panel(RecompOverlayText *text, uint16_t item)
     add_shop_icons(text, item);
 }
 
-/* Reads the icons from the disc the first time the panel shows. */
-static void load_icons(void)
-{
-    static bool tried;
-    static RecompIconImage images[RECOMP_ICON_COUNT];
-
-    if (tried) {
-        return;
-    }
-    tried = true;
-    if (recomp_island_icons_load(recomp_disc_root_path, images)) {
-        recomp_overlay_set_icon_images(images);
-    } else {
-        fprintf(stderr, "[auto:collection] shop panel: the island icons could not be read; showing text\n");
-    }
-}
-
 /* With the log on, one line for what the panel now shows: its text, with
    " / " for the line break, and which icons are lit, so a script can check
    the panel without looking at the screen. */
@@ -555,7 +538,7 @@ static void show_shop_panel(int item)
     RecompOverlayText text;
 
     if (item >= 0) {
-        load_icons();
+        recomp_island_icons_publish(recomp_disc_root_path);
         fill_shop_panel(&text, (uint16_t)item);
     } else {
         recomp_overlay_clear(&text);

@@ -1,12 +1,15 @@
 #include "island_icons.h"
 
+#include "overlay_text.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* The pack is entry 170 of datadvd.afs on the verified USA disc: an XPR0
-   resource pack the game loads whole for the island screens (the map, the
-   shops, the item screen). An AFS archive starts "AFS\0", an entry count and
+/* The packs are entries of datadvd.afs on the verified USA disc: 170, an
+   XPR0 resource pack the game loads whole for the island screens (the map,
+   the shops, the item screen), and 106, the one with the controller
+   settings' buttons, which the Hopping game also shows. An AFS archive starts "AFS\0", an entry count and
    one (offset, size) pair per entry. An XPR0 pack starts "XPR0", its total
    size and its header size, then resource headers from offset 12: a texture
    is five words (common, data offset, lock, format, size), a palette three
@@ -14,7 +17,8 @@
    Each icon texture is 8-bit paletted and swizzled, and the palette resource
    after it holds its 256 BGRA colours. */
 enum {
-    PACK_ENTRY = 170,
+    ISLAND_PACK = 170,
+    BUTTON_PACK = 106,
     XPR_HEADER = 12,
     TEXTURE_WORDS = 5,
     PALETTE_WORDS = 3,
@@ -26,12 +30,15 @@ enum {
 };
 
 static const struct {
+    unsigned pack;
     unsigned resource;
     uint32_t size;
 } icons[RECOMP_ICON_COUNT] = {
-    {0, 128}, {2, 128}, {4, 128}, {6, 128}, {8, 128}, {10, 128}, {12, 128}, {14, 128},
-    {84, 32}, /* heart */
-    {82, 32}, /* present */
+    {ISLAND_PACK, 0, 128}, {ISLAND_PACK, 2, 128}, {ISLAND_PACK, 4, 128}, {ISLAND_PACK, 6, 128},
+    {ISLAND_PACK, 8, 128}, {ISLAND_PACK, 10, 128}, {ISLAND_PACK, 12, 128}, {ISLAND_PACK, 14, 128},
+    {ISLAND_PACK, 84, 32}, /* heart */
+    {ISLAND_PACK, 82, 32}, /* present */
+    {BUTTON_PACK, 8, 64}, {BUTTON_PACK, 10, 64}, {BUTTON_PACK, 12, 64}, {BUTTON_PACK, 14, 64},
 };
 
 static uint32_t word(const uint8_t *bytes)
@@ -136,7 +143,7 @@ bool recomp_xpr_decode_p8(const uint8_t *pack, size_t size, unsigned resource,
     return true;
 }
 
-static uint8_t *read_pack(const char *disc_root, size_t *size)
+static uint8_t *read_pack(const char *disc_root, unsigned entry, size_t *size)
 {
     char path[1200];
     uint8_t toc[8], *pack;
@@ -149,8 +156,8 @@ static uint8_t *read_pack(const char *disc_root, size_t *size)
         return NULL;
     }
     pack = NULL;
-    if (fread(toc, 1, 8, file) == 8 && memcmp(toc, "AFS", 4) == 0 && word(toc + 4) > PACK_ENTRY &&
-        fseek(file, 8 + PACK_ENTRY * 8, SEEK_SET) == 0 && fread(toc, 1, 8, file) == 8) {
+    if (fread(toc, 1, 8, file) == 8 && memcmp(toc, "AFS", 4) == 0 && word(toc + 4) > entry &&
+        fseek(file, 8 + (long)entry * 8, SEEK_SET) == 0 && fread(toc, 1, 8, file) == 8) {
         offset = word(toc);
         length = word(toc + 4);
         if (length >= XPR_HEADER && length <= MAX_PACK && fseek(file, (long)offset, SEEK_SET) == 0) {
@@ -168,26 +175,46 @@ static uint8_t *read_pack(const char *disc_root, size_t *size)
 
 bool recomp_island_icons_load(const char *disc_root, RecompIconImage images[RECOMP_ICON_COUNT])
 {
-    size_t size = 0;
-    uint8_t *pack;
+    const unsigned packs[] = {ISLAND_PACK, BUTTON_PACK};
     bool loaded = true;
 
     memset(images, 0, sizeof *images * RECOMP_ICON_COUNT);
     if (disc_root == NULL) {
         return false;
     }
-    pack = read_pack(disc_root, &size);
-    if (pack == NULL) {
-        return false;
+    for (unsigned p = 0; p < sizeof packs / sizeof packs[0] && loaded; ++p) {
+        size_t size = 0;
+        uint8_t *pack = read_pack(disc_root, packs[p], &size);
+
+        loaded = pack != NULL;
+        for (unsigned i = 0; i < RECOMP_ICON_COUNT && loaded; ++i) {
+            if (icons[i].pack == packs[p]) {
+                loaded = recomp_xpr_decode_p8(pack, size, icons[i].resource, icons[i].size, icons[i].size,
+                    &images[i]);
+            }
+        }
+        free(pack);
     }
-    for (unsigned i = 0; i < RECOMP_ICON_COUNT && loaded; ++i) {
-        loaded = recomp_xpr_decode_p8(pack, size, icons[i].resource, icons[i].size, icons[i].size, &images[i]);
-    }
-    free(pack);
     if (!loaded) {
         recomp_island_icons_free(images);
     }
     return loaded;
+}
+
+bool recomp_island_icons_publish(const char *disc_root)
+{
+    static int loaded = -1;
+    static RecompIconImage images[RECOMP_ICON_COUNT];
+
+    if (loaded < 0) {
+        loaded = recomp_island_icons_load(disc_root, images);
+        if (loaded) {
+            recomp_overlay_set_icon_images(images);
+        } else {
+            fprintf(stderr, "[overlay] the game's icons could not be read; showing text\n");
+        }
+    }
+    return loaded != 0;
 }
 
 void recomp_island_icons_free(RecompIconImage images[RECOMP_ICON_COUNT])
