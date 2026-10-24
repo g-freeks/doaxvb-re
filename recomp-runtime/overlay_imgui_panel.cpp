@@ -119,6 +119,27 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
         ImGui::End();
         ImGui::PopStyleVar();
     }
+    if (text.keys.tip[0] != '\0') {
+        /* The reminder: a pill in the picture's bottom left corner, the
+           notice's twin, with its key in a lighter cap. */
+        const RecompOverlayPicture whole{0.0f, 0.0f, width, height};
+        const RecompOverlayPicture &area = picture != nullptr ? *picture : whole;
+        ImDrawList *list = ImGui::GetForegroundDrawList();
+        const ImVec2 key = ImGui::CalcTextSize(text.keys.tip_key);
+        const ImVec2 tip = ImGui::CalcTextSize(text.keys.tip);
+        const float pad = 6.0f * scale;
+        const ImVec2 low(area.x + kMargin * scale, area.y + area.height - kMargin * scale - tip.y - pad);
+        const ImVec2 high(low.x + key.x + tip.x + 5.0f * pad, low.y + tip.y + pad);
+        const float round = (high.y - low.y) * 0.5f;
+        list->AddRectFilled(low, high, IM_COL32(5, 15, 26, 150), round);
+        list->AddRect(low, high, IM_COL32(170, 235, 255, 120), round, 0, 1.0f * scale);
+        const ImVec2 cap_low(low.x + pad * 0.75f, low.y + pad * 0.3f);
+        const ImVec2 cap_high(cap_low.x + key.x + pad, high.y - pad * 0.3f);
+        list->AddRectFilled(cap_low, cap_high, IM_COL32(200, 225, 235, 220), (cap_high.y - cap_low.y) * 0.3f);
+        list->AddText(ImVec2(cap_low.x + pad * 0.5f, low.y + pad * 0.5f), IM_COL32(10, 25, 40, 255),
+            text.keys.tip_key);
+        list->AddText(ImVec2(cap_high.x + pad, low.y + pad * 0.5f), IM_COL32(230, 240, 250, 230), text.keys.tip);
+    }
     if (text.notice[0] != '\0') {
         /* A pill in the picture's bottom right corner, glass and green like
            the game's own panels; a busy notice leads with a turning arc. */

@@ -46,9 +46,13 @@ typedef struct RecompOverlayKey {
     char detail[RECOMP_OVERLAY_KEY_SIZE];
 } RecompOverlayKey;
 
+/* The key rows, and a small reminder in the picture's bottom left corner:
+   tip_key drawn as a key cap, then tip, such as how to show the rows. */
 typedef struct RecompOverlayKeys {
     RecompOverlayKey key[RECOMP_OVERLAY_KEYS];
     unsigned count;
+    char tip_key[8];
+    char tip[RECOMP_OVERLAY_KEY_SIZE];
 } RecompOverlayKeys;
 
 typedef struct RecompOverlayText {
@@ -82,6 +86,8 @@ void recomp_overlay_set_hint(RecompOverlayText *text, const char *hint);
 bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, float shift, float y,
     float size, float alpha);
 void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool busy);
+/* Sets the bottom left reminder; empty texts remove it. */
+void recomp_overlay_set_key_tip(RecompOverlayKeys *keys, const char *key, const char *tip);
 /* Adds a key row; false past RECOMP_OVERLAY_KEYS. Long texts are cut. */
 bool recomp_overlay_add_key(RecompOverlayKeys *keys, unsigned image, const char *name, const char *action,
     const char *detail);

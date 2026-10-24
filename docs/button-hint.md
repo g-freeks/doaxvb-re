@@ -1,8 +1,13 @@
 # Button hint
 
 During a volleyball match you play and during the Hopping game, the runner
-shows which button does what, with the game's own A, B, X and Y buttons, in
-a small panel at the right edge of the picture. It is one of the extra
+can show which button does what, with the game's own A, B, X and Y buttons,
+in a small panel at the right edge of the picture. The panel starts hidden:
+a small **Back · Controls** reminder sits in the bottom left corner, and
+pressing Back (Select, Share or View on other pads) shows the panel; Back
+hides it again, and the choice holds until Back is pressed again. Back is
+only taken for this while a match or the Hopping game is on screen; the game
+showed no reaction to it there. It is one of the extra
 overlays, off by default: tick **Extra overlays** in the launcher, or set
 `RECOMP_EXTRA_OVERLAYS=1`, which also turns on the
 [shops' collection panel](collection-log.md) and the
@@ -19,8 +24,8 @@ the actions:
 
 | Layout | Rows |
 |---|---|
-| Analog (the game's default) | A Attack: spike, serve; tap to tip. B Receive: pass; hard to set. |
-| Digital | Each of A, B, X and Y with its action: Attack (Strong) spike, serve, block; Receive (Strong) set at the net; Attack (Soft) tip over a block; Receive (Soft) pass to partner. A button set to none is left out. |
+| Analog | A Attack: spike, serve; tap to tip. B Receive: pass; hard to set. |
+| Digital (the runtime's default) | Each of A, B, X and Y with its action: Attack (Strong) spike, serve, block; Receive (Strong) set at the net; Attack (Soft) tip over a block; Receive (Soft) pass to partner. A button set to none is left out. |
 
 Two stick rows follow: the left stick moves and aims (at the serve, back for
 an underhand serve, forward for a jump serve), the right stick places the
@@ -29,9 +34,12 @@ the match scene runs with a person playing, and goes when the results menu
 opens. A match with no person in it, such as the title screen's demo or
 CPU Exhibition, shows none.
 
-**Hopping game**: A jumps, farther the harder it is pressed, and chains
-when pressed as the foot lands. The panel waits while the game shows its own
-instructions before START.
+**Hopping game** reuses the layout's strengths
+([`recomp-controls.md`](recomp-controls.md)): in Digital, a button set to a
+Strong action makes a long jump (two pads) and a Soft one a short jump (one
+pad); in Analog, A jumps farther the harder it is pressed. A jump chains when
+pressed as the foot lands. The reminder and panel wait while the game shows
+its own instructions before START.
 
 The explanations come from the community guides on
 [GameFAQs](https://gamefaqs.gamespot.com/xbox/561527-dead-or-alive-xtreme-beach-volleyball/faqs)
@@ -50,15 +58,14 @@ Addresses are for the verified USA executable. Everything is read-only.
 | `0x5D89EC`, `0x4D6FC8` | Results menu open; match over |
 | `0x4D72E3` | Island place; 16 is the Hopping game ([`ui-log.md`](ui-log.md)) |
 | `0x5C5FD1` | Message panel (`0x5C5BA0`) queued-record count; nonzero while the game shows its own instructions |
-| `0x41655D + port` | 1 analog, 0 digital |
+| `0x41655D + port` | 1 analog, 0 digital; the runtime keeps it as a PC preference ([`recomp-controls.md`](recomp-controls.md)) |
 | `0x416570 + 8 * port` | Layout: bytes 1 to 4 the digital actions of A, B, X and Y (3 Attack Strong, 4 Receive Strong, 5 Attack Soft, 6 Receive Soft, 0 none); bytes 5 and 6 the analog actions of A and B (1 Attack, 2 Receive) |
 
 The layout was found on Controller Settings by changing one setting at a
 time and comparing guest memory: switching Analog/Digital flipped only the
 analog bytes, and changing A's action changed only byte 1 of each port's
-record. The game starts with every port analog. A Vacation's own settings,
-chosen through Options on the save select, load with it; an Exhibition
-match keeps the start-up layout. Not yet checked: which code reads these
+record. The runtime starts every port in Digital, or in the mode last
+chosen, which it keeps outside the saves. Not yet checked: which code reads these
 bytes during a match, and a vacation match (the hint shows for any match a
 person plays).
 
@@ -68,13 +75,17 @@ the runtime decodes them from the player's disc with the island icons
 ([`island_icons.c`](../recomp-runtime/island_icons.c)). Nothing extracted is
 committed.
 
-With `RECOMP_AUTO_LOG=1` the runner prints an `[auto:hint]` line when the
-panel changes:
+Back is read from the game's held-button mask for every controller,
+`0x5F3138` (Back `0x0020`), once a presented frame.
+
+With `RECOMP_AUTO_LOG=1` the runner prints an `[auto:hint]` line when what
+it shows changes; `collapsed` is the reminder alone:
 
 ```text
-[auto:hint] frame 2067: volleyball port 0 analog: A Attack, B Receive, L Move, aim, R Partner
-[auto:hint] frame 1291: hopping: A Jump, A Chain
-[auto:hint] frame 1051: none
+[auto:hint] frame 2067: volleyball port 0 digital: collapsed
+[auto:hint] frame 2293: volleyball port 0 digital: A Attack (Strong), B Receive (Strong), X Attack (Soft), Y Receive (Soft), L Move, aim, R Partner
+[auto:hint] frame 1525: hopping port 0 digital: A Long jump, B Long jump, X Short jump, Y Short jump,  Chain
+[auto:hint] frame 23770: none
 ```
 
 Implementation: [`button_hint.c`](../recomp-runtime/button_hint.c), the key

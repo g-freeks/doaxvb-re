@@ -38,11 +38,14 @@ typedef struct RecompPadLayout {
     uint8_t analog_ab[2]; /* A, B */
 } RecompPadLayout;
 
-/* The key rows for a game with a layout; none for RECOMP_HINT_NONE. */
-void recomp_button_hint_fill(RecompOverlayKeys *keys, RecompHintGame game, const RecompPadLayout *layout);
+/* What to show for a game with a layout: nothing for RECOMP_HINT_NONE;
+   otherwise the Back reminder, and the key rows only when expanded. */
+void recomp_button_hint_fill(RecompOverlayKeys *keys, RecompHintGame game, const RecompPadLayout *layout,
+    bool expanded);
 
-/* Once a presented frame: publishes the panel when what it shows changes
-   and, with RECOMP_AUTO_LOG=1, an [auto:hint] line. Read-only. */
+/* Once a presented frame: Back shows or hides the rows (hidden at first);
+   publishes the panel when what it shows changes and, with
+   RECOMP_AUTO_LOG=1, an [auto:hint] line. Read-only. */
 void recomp_button_hint_frame(void);
 
 #ifdef __cplusplus

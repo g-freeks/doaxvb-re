@@ -5,10 +5,11 @@
 ### Added
 
 - **Button hint**. With **Extra overlays** (below), a volleyball match you
-  play and the Hopping game show which button does what, with the game's own
-  A, B, X and Y buttons read from the disc. Volleyball follows the layout
-  chosen in Controller Settings, analog or digital, with the stick rows; the
-  explanations come from the GameFAQs guides. See `docs/button-hint.md`.
+  play and the Hopping game show a small **Back · Controls** reminder; Back
+  shows which button does what, with the game's own A, B, X and Y buttons
+  read from the disc, and hides it again. Both follow the layout chosen in
+  Controller Settings, analog or digital; volleyball adds the stick rows.
+  The explanations come from the GameFAQs guides. See `docs/button-hint.md`.
 - **Save indicator**. With **Extra overlays** (below), a small **Saved**
   notice shows in the bottom right corner for about five seconds after each
   game save, so you know when quitting keeps your progress. In play the game

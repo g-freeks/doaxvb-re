@@ -30,10 +30,41 @@ static void add_button(RecompOverlayKeys *keys, unsigned button, uint8_t action)
         actions[action].detail);
 }
 
-void recomp_button_hint_fill(RecompOverlayKeys *keys, RecompHintGame game, const RecompPadLayout *layout)
+/* The Hopping game reuses the digital layout's strength: a button set to a
+   strong action jumps two pads, a soft one one pad (docs/recomp-controls.md).
+   Analog jumps farther the harder A is pressed. */
+static void add_jumps(RecompOverlayKeys *keys, const RecompPadLayout *layout)
+{
+    if (layout->analog) {
+        recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON, "A", "Jump", "harder jumps farther");
+    } else {
+        for (unsigned button = 0; button < 4u; ++button) {
+            const uint8_t action = layout->digital[button];
+
+            if (action == RECOMP_ACTION_ATTACK_STRONG || action == RECOMP_ACTION_RECEIVE_STRONG) {
+                recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON + button, button_names[button], "Long jump",
+                    "two pads");
+            } else if (action == RECOMP_ACTION_ATTACK_SOFT || action == RECOMP_ACTION_RECEIVE_SOFT) {
+                recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON + button, button_names[button], "Short jump",
+                    "one pad");
+            }
+        }
+    }
+    recomp_overlay_add_key(keys, RECOMP_ICON_COUNT, "", "Chain", "press as your foot lands");
+}
+
+void recomp_button_hint_fill(RecompOverlayKeys *keys, RecompHintGame game, const RecompPadLayout *layout,
+    bool expanded)
 {
     memset(keys, 0, sizeof *keys);
-    if (game == RECOMP_HINT_VOLLEYBALL && layout != NULL) {
+    if (game == RECOMP_HINT_NONE || layout == NULL) {
+        return;
+    }
+    recomp_overlay_set_key_tip(keys, "Back", expanded ? "Hide controls" : "Controls");
+    if (!expanded) {
+        return;
+    }
+    if (game == RECOMP_HINT_VOLLEYBALL) {
         if (layout->analog) {
             for (unsigned button = 0; button < 2u; ++button) add_button(keys, button, layout->analog_ab[button]);
         } else {
@@ -42,8 +73,7 @@ void recomp_button_hint_fill(RecompOverlayKeys *keys, RecompHintGame game, const
         recomp_overlay_add_key(keys, RECOMP_ICON_COUNT, "L", "Move, aim", "serve: back low, forward jump");
         recomp_overlay_add_key(keys, RECOMP_ICON_COUNT, "R", "Partner", "forward net, back deep");
     } else if (game == RECOMP_HINT_HOPPING) {
-        recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON, "A", "Jump", "harder jumps farther");
-        recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON, "A", "Chain", "press as your foot lands");
+        add_jumps(keys, layout);
     }
 }
 
@@ -51,8 +81,9 @@ void recomp_button_hint_fill(RecompOverlayKeys *keys, RecompHintGame game, const
 #include "kernel_abi.h"
 #include "runtime.h"
 
-#include <stdio.h>
 #include "ui_log.h"
+
+#include <stdio.h>
 
 /* Guest state, for the verified USA executable. The match fields are in
    docs/title-idle.md, the message panel's in the game UI research notes;
@@ -81,7 +112,9 @@ enum {
     PAD_ANALOG = 0x0041655Du, /* a byte per port */
     PAD_LAYOUT = 0x00416570u, /* 8 bytes per port: +1 A B X Y digital, +5 A B analog */
     PAD_LAYOUT_STRIDE = 8,
-    PORTS = 4
+    PORTS = 4,
+    BUTTONS_HELD = 0x005F3138u, /* any controller, START 0x0010 (docs/title-idle.md) */
+    BUTTON_BACK = 0x0020u
 };
 
 static unsigned frame;
@@ -134,7 +167,11 @@ static void log_keys(RecompHintGame game, unsigned port, const RecompPadLayout *
     if (game == RECOMP_HINT_VOLLEYBALL) {
         fprintf(stderr, "volleyball port %u %s:", port, layout->analog ? "analog" : "digital");
     } else {
-        fprintf(stderr, "hopping:");
+        fprintf(stderr, "hopping port %u %s:", port, layout->analog ? "analog" : "digital");
+    }
+    if (keys->count == 0u) {
+        fprintf(stderr, " collapsed\n");
+        return;
     }
     for (unsigned i = 0; i < keys->count; ++i) {
         fprintf(stderr, "%s %s %s", i == 0u ? "" : ",", keys->key[i].name, keys->key[i].action);
@@ -146,8 +183,8 @@ void recomp_button_hint_frame(void)
 {
     static RecompOverlayKeys shown, pending;
     static unsigned held;
-    static bool logged;
-    RecompPadLayout layout;
+    static bool logged, expanded, back_was_down;
+    RecompPadLayout layout = {0};
     RecompOverlayKeys keys;
     RecompHintGame game;
     unsigned port;
@@ -157,16 +194,26 @@ void recomp_button_hint_frame(void)
     }
     ++frame;
     game = current_game(&port);
-    memset(&layout, 0, sizeof layout);
-    if (game == RECOMP_HINT_VOLLEYBALL) {
-        read_layout(port, &layout);
+    /* Back shows or hides the rows while a game is on screen; the choice
+       holds until it is pressed again. */
+    const bool back_down = (*recomp_memory_u32(BUTTONS_HELD) & BUTTON_BACK) != 0u;
+    const bool toggled = back_down && !back_was_down && game != RECOMP_HINT_NONE;
+
+    back_was_down = back_down;
+    if (toggled) {
+        expanded = !expanded;
     }
-    recomp_button_hint_fill(&keys, game, &layout);
+    read_layout(port, &layout);
+    recomp_button_hint_fill(&keys, game, &layout, expanded);
+    /* A toggle shows at once; anything else waits to settle. */
     if (memcmp(&keys, &pending, sizeof keys) != 0) {
         pending = keys;
-        held = 0;
+        held = toggled ? SETTLE_FRAMES : 0u;
     }
-    if (++held < SETTLE_FRAMES || (logged && memcmp(&keys, &shown, sizeof keys) == 0)) {
+    if (held < SETTLE_FRAMES && ++held < SETTLE_FRAMES) {
+        return;
+    }
+    if (logged && memcmp(&keys, &shown, sizeof keys) == 0) {
         return;
     }
     if (keys.count != 0u) {
@@ -174,7 +221,7 @@ void recomp_button_hint_frame(void)
     }
     recomp_overlay_publish_keys(&keys);
     shown = keys;
-    if (recomp_ui_log_enabled() && (logged || keys.count != 0u)) {
+    if (recomp_ui_log_enabled() && (logged || keys.tip[0] != '\0')) {
         log_keys(game, port, &layout, &keys);
     }
     logged = true;

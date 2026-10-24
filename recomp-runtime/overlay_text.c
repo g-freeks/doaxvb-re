@@ -73,6 +73,13 @@ void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool
     text->notice_busy = text->notice[0] != '\0' && busy;
 }
 
+void recomp_overlay_set_key_tip(RecompOverlayKeys *keys, const char *key, const char *tip)
+{
+    if (keys == NULL) return;
+    copy_text(keys->tip_key, sizeof keys->tip_key, key);
+    copy_text(keys->tip, sizeof keys->tip, tip);
+}
+
 bool recomp_overlay_add_key(RecompOverlayKeys *keys, unsigned image, const char *name, const char *action,
     const char *detail)
 {
@@ -88,7 +95,8 @@ bool recomp_overlay_add_key(RecompOverlayKeys *keys, unsigned image, const char 
 bool recomp_overlay_empty(const RecompOverlayText *text)
 {
     return text == NULL || (text->title[0] == '\0' && text->count == 0u && text->hint[0] == '\0' &&
-        text->icon_count == 0u && text->notice[0] == '\0' && text->keys.count == 0u);
+        text->icon_count == 0u && text->notice[0] == '\0' && text->keys.count == 0u &&
+        text->keys.tip[0] == '\0');
 }
 
 static RecompOverlayText published, status;
@@ -185,6 +193,6 @@ void recomp_overlay_take(RecompOverlayText *text)
         memcpy(text->notice, notice, sizeof notice);
         text->notice_busy = notice_busy;
     }
-    if (keys.count != 0u) text->keys = keys;
+    if (keys.count != 0u || keys.tip[0] != '\0') text->keys = keys;
     unlock();
 }
