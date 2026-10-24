@@ -20,8 +20,9 @@
   the bottom of the item preview, and the other girls' portraits down its
   right edge, using the game's own icons read from the disc. A purchase
   shows at once. The Direct3D 11 presenter shows the same as text for now.
-  `RECOMP_COLLECTION_LOG=1` logs ownership and inventory changes. Read-only;
-  off by default. See `docs/collection-log.md`.
+  `RECOMP_COLLECTION_LOG=1` logs ownership and inventory changes, and
+  `tools/check_collection.py` checks the log and panel in the running game
+  by script. Read-only; off by default. See `docs/collection-log.md`.
 - **Title screen idle behavior** (#117). A launcher choice, or
   `RECOMP_TITLE_IDLE`, sets what the game does when its title screen is left
   idle. **Default** is the game's own attract sequence. **No cutscene**

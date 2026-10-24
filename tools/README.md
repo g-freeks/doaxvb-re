@@ -31,7 +31,9 @@ and verifies each declared submodule's path, URL, and pinned commit.
 runtime's `[auto:ui]` log lines to confirm each step. It has routes to the
 shop, the island map, the pool and the items screen. See
 [driving the game by script](../docs/automation.md). `test_drive_game.py` tests
-it against a fake game.
+it against a fake game. `check_collection.py` uses it to check the shop
+collection log and panel in the running game; see
+[the collection log's checks](../docs/collection-log.md#checks).
 
 ## Deliberately absent
 
