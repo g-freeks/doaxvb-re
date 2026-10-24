@@ -14,7 +14,7 @@ $idleValues = 'default', 'no-cutscene', 'cpu-exhibition'
 $idleNames = [string[]]('Default', 'No cutscene', 'CPU Exhibition')
 $settings = [pscustomobject]@{
     height = [Windows.Forms.Screen]::PrimaryScreen.Bounds.Height; msaa = 1; smaa = $false; volume = 100; shuffle = $false
-    sun_shadows = $false; demo_cut_hold = $false; title_idle = 'default'; unlock_swimsuits = $false; free_camera = $false
+    sun_shadows = $false; demo_cut_hold = $false; title_idle = 'default'; unlock_swimsuits = $false; free_camera = $false; shop_panel = $false
     vrr = $false; fog = $true; textures = $false; textureFolder = (Join-Path $root 'private\textures\replace'); textureDump = $false
     pixelLighting = $false; smoothNormals = $false; rtgi = $false; rtgiStrength = 1; rtgiHitColor = $true
 }
@@ -282,7 +282,8 @@ New-Note $pages[3] 'Songs in this folder play at the Radio Station.' 114 40 | Ou
 $unlock = New-Toggle $pages[4] 'Unlock swimsuits' 0 $settings.unlock_swimsuits
 $demoCut = New-Toggle $pages[4] 'Shorter demo cuts' 28 $settings.demo_cut_hold
 $freeCamera = New-Toggle $pages[4] 'Free camera (F1)' 56 $settings.free_camera
-$idle = Add-Row $pages[4] 'Title screen idle' 92 (New-Choice $idleNames ([Array]::IndexOf($idleValues, [string]$settings.title_idle)))
+$shopPanel = New-Toggle $pages[4] 'Collection in shops' 84 $settings.shop_panel
+$idle = Add-Row $pages[4] 'Title screen idle' 120 (New-Choice $idleNames ([Array]::IndexOf($idleValues, [string]$settings.title_idle)))
 
 $textures = New-Toggle $pages[5] 'Use texture pack' 0 $settings.textures
 $textureFolder = New-Object Windows.Forms.TextBox -Property @{ Left = 0; Top = 32; Width = 350; ReadOnly = $true; BorderStyle = 'FixedSingle'; BackColor = $field; ForeColor = $ink; Text = [string]$settings.textureFolder }
@@ -313,7 +314,7 @@ New-Note $pages[7] "Free camera`n    F1    Fly the camera`n`nTextures`n    F12  
 function Update-Summary {
     $display = "$($resolution.SelectedItem)$dot" + $(if ($msaa.SelectedIndex) { "$($msaa.SelectedItem) MSAA" } else { 'No MSAA' }) + $(if ($smaa.Checked) { "$($dot)SMAA" })
     $render = 'Direct3D 11' + $(if ($rtgi.Checked) { ' / DXR' }) + $dot + $(if ($fog.Checked) { 'Fog on' } else { 'Fog off' }) + $(if ($vrr.Checked) { "$($dot)VRR" })
-    $extras = @($(if ($sun.Checked) { 'Sun shadows' }), $(if ($unlock.Checked) { 'Swimsuits' }), $(if ($freeCamera.Checked) { 'Free camera' }), $(if ($textures.Checked) { 'Texture pack' }), $(if ($pixelLighting.Checked) { 'Per-pixel' }), $(if ($rtgi.Checked) { 'RTGI' })) | Where-Object { $_ }
+    $extras = @($(if ($sun.Checked) { 'Sun shadows' }), $(if ($unlock.Checked) { 'Swimsuits' }), $(if ($freeCamera.Checked) { 'Free camera' }), $(if ($shopPanel.Checked) { 'Shop collection' }), $(if ($textures.Checked) { 'Texture pack' }), $(if ($pixelLighting.Checked) { 'Per-pixel' }), $(if ($rtgi.Checked) { 'RTGI' })) | Where-Object { $_ }
     $summary.Text = "$display`n$render`n" + $(if ($extras) { $extras -join $dot } else { 'None' })
 }
 
@@ -383,7 +384,7 @@ $count = $samples[$msaa.SelectedIndex]
 $percent = $volumes[$volume.SelectedIndex]
 [pscustomobject]@{
     height = $height; msaa = $count; smaa = $smaa.Checked; volume = $percent; shuffle = $shuffle.Checked
-    sun_shadows = $sun.Checked; demo_cut_hold = $demoCut.Checked; title_idle = $idleValues[$idle.SelectedIndex]; unlock_swimsuits = $unlock.Checked; free_camera = $freeCamera.Checked
+    sun_shadows = $sun.Checked; demo_cut_hold = $demoCut.Checked; title_idle = $idleValues[$idle.SelectedIndex]; unlock_swimsuits = $unlock.Checked; free_camera = $freeCamera.Checked; shop_panel = $shopPanel.Checked
     vrr = $vrr.Checked; fog = $fog.Checked; textures = $textures.Checked; textureFolder = $textureFolder.Text; textureDump = $textureDump.Checked
     pixelLighting = $pixelLighting.Checked; smoothNormals = $smoothNormals.Checked; rtgi = $rtgi.Checked; rtgiStrength = $strength.Value; rtgiHitColor = $hitColor.Checked
 } | ConvertTo-Json | Set-Content $settingsPath -Encoding UTF8
@@ -400,6 +401,8 @@ $env:RECOMP_UNLOCK_SWIMSUITS = if ($unlock.Checked) { '1' } else { '0' }
 $env:RECOMP_DEMO_CUT_HOLD = if ($demoCut.Checked) { '12' } else { $null }
 # F1 then flies the game's camera; see docs/free-camera.md.
 $env:RECOMP_FREE_CAMERA = if ($freeCamera.Checked) { '1' } else { $null }
+# The shops show which girls own the highlighted item; see docs/collection-log.md.
+$env:RECOMP_SHOP_PANEL = if ($shopPanel.Checked) { '1' } else { $null }
 $env:RECOMP_D3D_VRR = if ($vrr.Checked) { '1' } else { '0' }
 $env:RECOMP_D3D_FOG = if ($fog.Checked) { '1' } else { '0' }
 $env:RECOMP_TEXTURES = if ($textures.Checked) { $textureFolder.Text } else { $null }

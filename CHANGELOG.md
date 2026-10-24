@@ -13,6 +13,15 @@
   night and a new vacation, and puts back any saves a run changes.
   `RECOMP_SCREENSHOT_TRIGGER` lets a script take screenshots. Read-only; off
   by default. See `docs/automation.md` and `docs/ui-log.md`.
+- **Collection in shops**. An opt-in launcher option, or
+  `RECOMP_SHOP_PANEL=1`, shows in the shops which girls already have the
+  highlighted item, without pressing X and waiting for her reply: the
+  playing girl's heart (in her Collection) and present (in her room) along
+  the bottom of the item preview, and the other girls' portraits down its
+  right edge, using the game's own icons read from the disc. A purchase
+  shows at once. The Direct3D 11 presenter shows the same as text for now.
+  `RECOMP_COLLECTION_LOG=1` logs ownership and inventory changes. Read-only;
+  off by default. See `docs/collection-log.md`.
 - **Title screen idle behavior** (#117). A launcher choice, or
   `RECOMP_TITLE_IDLE`, sets what the game does when its title screen is left
   idle. **Default** is the game's own attract sequence. **No cutscene**

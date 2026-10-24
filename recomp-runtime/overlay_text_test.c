@@ -44,6 +44,17 @@ int main(void)
     recomp_overlay_take(&taken);
     check(memcmp(&taken, &text, sizeof text) == 0, "a taken overlay is the published one");
 
+    RecompOverlayText shop;
+    recomp_overlay_clear(&shop);
+    recomp_overlay_set_hint(&shop, "Shylph");
+    recomp_overlay_publish_status(&shop);
+    recomp_overlay_take(&taken);
+    check(strcmp(taken.hint, "F1 leave") == 0, "the status waits while an overlay is up");
+    recomp_overlay_clear(&text);
+    recomp_overlay_publish(&text);
+    recomp_overlay_take(&taken);
+    check(strcmp(taken.hint, "Shylph") == 0, "the status shows once the overlay is empty");
+
     if (failures == 0) printf("overlay text test passed\n");
     return failures == 0 ? 0 : 1;
 }

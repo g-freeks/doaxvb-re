@@ -2602,7 +2602,8 @@ RecompD3dPresenterError recomp_d3d_presenter_submit(
                 RecompOverlayText overlay;
                 recomp_overlay_take(&overlay);
                 recomp_overlay_sdl_gpu_draw(presenter->device, presenter->window, cmdbuf,
-                    swapchain_tex, swap_w, swap_h, &overlay);
+                    swapchain_tex, swap_w, swap_h, static_cast<float>(dst_x), static_cast<float>(dst_y),
+                    static_cast<float>(dst_w), static_cast<float>(dst_h), &overlay);
             }
         }
 

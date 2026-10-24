@@ -45,12 +45,21 @@ void recomp_overlay_set_hint(RecompOverlayText *text, const char *hint)
     if (text != NULL) copy_text(text->hint, sizeof text->hint, hint);
 }
 
-bool recomp_overlay_empty(const RecompOverlayText *text)
+bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, float shift, float y,
+    float size, float alpha)
 {
-    return text == NULL || (text->title[0] == '\0' && text->count == 0u && text->hint[0] == '\0');
+    if (text == NULL || text->icon_count >= RECOMP_OVERLAY_ICONS) return false;
+    text->icon[text->icon_count++] = (RecompOverlayIcon){image, x, shift, y, size, alpha};
+    return true;
 }
 
-static RecompOverlayText published;
+bool recomp_overlay_empty(const RecompOverlayText *text)
+{
+    return text == NULL || (text->title[0] == '\0' && text->count == 0u && text->hint[0] == '\0' &&
+        text->icon_count == 0u);
+}
+
+static RecompOverlayText published, status;
 #ifdef _WIN32
 static volatile LONG published_lock;
 #else
@@ -87,10 +96,36 @@ void recomp_overlay_publish(const RecompOverlayText *text)
     unlock();
 }
 
+void recomp_overlay_publish_status(const RecompOverlayText *text)
+{
+    if (text == NULL) return;
+    lock();
+    status = *text;
+    unlock();
+}
+
+static const RecompIconImage *icon_images;
+
+void recomp_overlay_set_icon_images(const RecompIconImage *images)
+{
+    lock();
+    icon_images = images;
+    unlock();
+}
+
+const RecompIconImage *recomp_overlay_icon_images(void)
+{
+    const RecompIconImage *images;
+    lock();
+    images = icon_images;
+    unlock();
+    return images;
+}
+
 void recomp_overlay_take(RecompOverlayText *text)
 {
     if (text == NULL) return;
     lock();
-    *text = published;
+    *text = recomp_overlay_empty(&published) ? status : published;
     unlock();
 }
