@@ -119,6 +119,9 @@ enum {
     MATCH_OVER = 0x004D6FC8u,
     ISLAND_PLACE = 0x004D72E3u,
     PLACE_HOPPING = 16,
+    /* A vacation's matches run on the island, not in the match scene,
+       which only Exhibition uses. */
+    PLACE_MATCH = 11,
     /* The message panel's queued-record count (0x5C5BA0 + 0x431): nonzero
        while the game shows its own instructions, such as the Hopping
        game's before START. */
@@ -154,7 +157,8 @@ static RecompHintGame current_game(unsigned *port)
     if (scene == SCENE_ISLAND && byte_at(ISLAND_PLACE) == PLACE_HOPPING) {
         return RECOMP_HINT_HOPPING;
     }
-    if (scene != SCENE_MATCH || byte_at(RESULTS_OPEN) != 0u || byte_at(MATCH_OVER) != 0u) {
+    if (!(scene == SCENE_MATCH || (scene == SCENE_ISLAND && byte_at(ISLAND_PLACE) == PLACE_MATCH)) ||
+        byte_at(RESULTS_OPEN) != 0u || byte_at(MATCH_OVER) != 0u) {
         return RECOMP_HINT_NONE;
     }
     for (unsigned player = 0; player < PORTS; ++player) {

@@ -55,10 +55,10 @@ Addresses are for the verified USA executable. Everything is read-only.
 
 | Address | Meaning |
 |---|---|
-| `0x5DECE0` | Scene running: 0 a match, 1 the island ([`title-idle.md`](title-idle.md)) |
+| `0x5DECE0` | Scene running: 0 an Exhibition match, 1 the island ([`title-idle.md`](title-idle.md)) |
 | `0x5DECE4`, `0x5DECE8` | Four bytes each: the player is a person, and that person's controller port |
 | `0x5D89EC`, `0x4D6FC8` | Results menu open; match over |
-| `0x4D72E3` | Island place; 16 is the Hopping game ([`ui-log.md`](ui-log.md)) |
+| `0x4D72E3` | Island place; 11 is a vacation's match, 16 the Hopping game ([`ui-log.md`](ui-log.md)) |
 | `0x5C5FD1` | Message panel (`0x5C5BA0`) queued-record count; nonzero while the game shows its own instructions |
 | `0x41655D + port` | 1 analog, 0 digital; the runtime keeps it as a PC preference ([`recomp-controls.md`](recomp-controls.md)) |
 | `0x416570 + 8 * port` | Layout: bytes 1 to 4 the digital actions of A, B, X and Y (3 Attack Strong, 4 Receive Strong, 5 Attack Soft, 6 Receive Soft, 0 none); bytes 5 and 6 the analog actions of A and B (1 Attack, 2 Receive) |
@@ -67,9 +67,12 @@ The layout was found on Controller Settings by changing one setting at a
 time and comparing guest memory: switching Analog/Digital flipped only the
 analog bytes, and changing A's action changed only byte 1 of each port's
 record. The runtime starts every port in Digital, or in the mode last
-chosen, which it keeps outside the saves. Not yet checked: which code reads these
-bytes during a match, and a vacation match (the hint shows for any match a
-person plays).
+chosen, which it keeps outside the saves. Not yet checked: which code reads
+these bytes during a match.
+
+A vacation's matches are not the match scene: they run on the island, place
+11. A run checked one at Niki Beach: the reminder showed from the start of
+play and went at the results (Score Point, Nice Point).
 
 The buttons are resources 8, 10, 12 and 14 of entry 106 of `datadvd.afs`,
 the pack with the Controller Settings buttons, 64-pixel paletted textures;
