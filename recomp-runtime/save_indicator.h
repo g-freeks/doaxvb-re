@@ -39,7 +39,8 @@ RecompSaveNotice recomp_save_indicator_notice(const RecompSaveIndicator *indicat
 /* The words shown for a notice, or "" for none. */
 const char *recomp_save_notice_text(RecompSaveNotice notice);
 
-/* The runner's indicator, on unless RECOMP_SAVE_INDICATOR=0. The notes come
+/* The runner's indicator, one of the extra overlays (RECOMP_EXTRA_OVERLAYS=1),
+   off by default. The notes come
    from the save adapter; the frame publishes the overlay notice and, with
    RECOMP_AUTO_LOG=1, an [auto:save] line when it changes. */
 void recomp_save_indicator_note_begin(void);

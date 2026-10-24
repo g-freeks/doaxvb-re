@@ -12,7 +12,7 @@
 #include <string.h>
 
 /* Item ownership log, opt-in with RECOMP_COLLECTION_LOG=1, and the shop's
-   ownership panel, opt-in with RECOMP_SHOP_PANEL=1.
+   ownership panel, one of the extra overlays (RECOMP_EXTRA_OVERLAYS=1).
 
    The loaded save keeps one word per item, 708 words at 0x9D8DCE (file
    offset 0x1646 in the save). A girl has two bits in a word, at twice her
@@ -128,9 +128,7 @@ static bool log_enabled(void)
 
 static bool panel_enabled(void)
 {
-    static int cache = -1;
-
-    return setting("RECOMP_SHOP_PANEL", &cache);
+    return recomp_extra_overlays_enabled();
 }
 
 static const char *girl_name(unsigned girl)

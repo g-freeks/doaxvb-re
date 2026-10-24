@@ -40,10 +40,10 @@ int main(void)
 
 #ifdef _WIN32
     _putenv_s("RECOMP_COLLECTION_LOG", "1");
-    _putenv_s("RECOMP_SHOP_PANEL", "1");
+    _putenv_s("RECOMP_EXTRA_OVERLAYS", "1");
 #else
     setenv("RECOMP_COLLECTION_LOG", "1", 1);
-    setenv("RECOMP_SHOP_PANEL", "1", 1);
+    setenv("RECOMP_EXTRA_OVERLAYS", "1", 1);
 #endif
     *recomp_memory_u16(TEST_ITEMS) = 2u;
     *recomp_memory_u32(ITEM_TABLE + TEST_ITEM * 4u) = TEST_ITEMS;

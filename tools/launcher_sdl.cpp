@@ -29,7 +29,7 @@ const int kVolumes[] = {100, 75, 50, 25, 0};
 const char *const kIdleValues[] = {"default", "no-cutscene", "cpu-exhibition"};
 const char *const kIdleNames[] = {"Default", "No cutscene", "CPU Exhibition"};
 
-enum Item { RESOLUTION, MSAA, VOLUME, SHUFFLE, UNLOCK, DEMO_CUT, FREE_CAMERA, SHOP_PANEL, IDLE, PLAY, QUIT,
+enum Item { RESOLUTION, MSAA, VOLUME, SHUFFLE, UNLOCK, DEMO_CUT, FREE_CAMERA, EXTRA_OVERLAYS, IDLE, PLAY, QUIT,
     ITEM_COUNT };
 
 struct Settings {
@@ -40,7 +40,7 @@ struct Settings {
     bool unlock_swimsuits = false;
     bool demo_cut = false;
     bool free_camera = false;
-    bool shop_panel = false;
+    bool extra_overlays = false;
     int idle = 0;
 };
 
@@ -75,7 +75,7 @@ Settings loadSettings(const std::string &path)
     if (jsonValue(text, "unlock_swimsuits", value)) settings.unlock_swimsuits = value == "true";
     if (jsonValue(text, "demo_cut_hold", value)) settings.demo_cut = value == "true";
     if (jsonValue(text, "free_camera", value)) settings.free_camera = value == "true";
-    if (jsonValue(text, "shop_panel", value)) settings.shop_panel = value == "true";
+    if (jsonValue(text, "extra_overlays", value)) settings.extra_overlays = value == "true";
     if (jsonValue(text, "title_idle", value)) {
         for (int i = 0; i < static_cast<int>(std::size(kIdleValues)); ++i) {
             if (value == std::string("\"") + kIdleValues[i] + "\"") settings.idle = i;
@@ -93,7 +93,7 @@ bool saveSettings(const std::string &path, const Settings &settings)
          << ",\n  \"unlock_swimsuits\": " << (settings.unlock_swimsuits ? "true" : "false")
          << ",\n  \"demo_cut_hold\": " << (settings.demo_cut ? "true" : "false")
          << ",\n  \"free_camera\": " << (settings.free_camera ? "true" : "false")
-         << ",\n  \"shop_panel\": " << (settings.shop_panel ? "true" : "false")
+         << ",\n  \"extra_overlays\": " << (settings.extra_overlays ? "true" : "false")
          << ",\n  \"title_idle\": \"" << kIdleValues[settings.idle] << "\"\n}\n";
     return static_cast<bool>(file);
 }
@@ -182,7 +182,7 @@ struct Launcher {
         centered(82, "Native port settings", kMuted);
 
         static const char *labels[] = {"Resolution", "Anti-aliasing", "Volume", "Shuffle music",
-            "Unlock swimsuits", "Shorter demo cuts", "Free camera", "Collection in shops",
+            "Unlock swimsuits", "Shorter demo cuts", "Free camera", "Extra overlays",
             "Title screen idle"};
         for (int item = RESOLUTION; item < PLAY; ++item) {
             const SDL_FRect row = itemRect(item);
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
     launcher.choice[UNLOCK] = settings.unlock_swimsuits ? 1 : 0;
     launcher.choice[DEMO_CUT] = settings.demo_cut ? 1 : 0;
     launcher.choice[FREE_CAMERA] = settings.free_camera ? 1 : 0;
-    launcher.choice[SHOP_PANEL] = settings.shop_panel ? 1 : 0;
+    launcher.choice[EXTRA_OVERLAYS] = settings.extra_overlays ? 1 : 0;
     launcher.choice[IDLE] = settings.idle;
 
     int result = -1;
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
         settings.unlock_swimsuits = launcher.choice[UNLOCK] != 0;
         settings.demo_cut = launcher.choice[DEMO_CUT] != 0;
         settings.free_camera = launcher.choice[FREE_CAMERA] != 0;
-        settings.shop_panel = launcher.choice[SHOP_PANEL] != 0;
+        settings.extra_overlays = launcher.choice[EXTRA_OVERLAYS] != 0;
         settings.idle = launcher.choice[IDLE];
         if (!saveSettings(settings_path, settings)) {
             std::fprintf(stderr, "launcher: cannot write %s\n", settings_path.c_str());

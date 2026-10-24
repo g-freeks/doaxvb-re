@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -16,6 +17,18 @@ static void copy_text(char *destination, size_t size, const char *source)
     if (length >= size) length = size - 1u;
     memcpy(destination, source, length);
     destination[length] = '\0';
+}
+
+bool recomp_extra_overlays_enabled(void)
+{
+    static int cache = -1;
+
+    if (cache < 0) {
+        const char *value = getenv("RECOMP_EXTRA_OVERLAYS");
+
+        cache = value != NULL && strcmp(value, "1") == 0;
+    }
+    return cache != 0;
 }
 
 void recomp_overlay_clear(RecompOverlayText *text)

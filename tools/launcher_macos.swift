@@ -44,7 +44,7 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let unlock = NSButton(checkboxWithTitle: "Unlock swimsuits", target: nil, action: nil)
     let demoCut = NSButton(checkboxWithTitle: "Shorter demo cuts", target: nil, action: nil)
     let freeCamera = NSButton(checkboxWithTitle: "Free camera", target: nil, action: nil)
-    let shopPanel = NSButton(checkboxWithTitle: "Collection in shops", target: nil, action: nil)
+    let extraOverlays = NSButton(checkboxWithTitle: "Extra overlays", target: nil, action: nil)
     var launched = false
 
     func addRow(_ title: String, _ popup: NSPopUpButton, _ items: [String], _ index: Int, _ y: CGFloat) {
@@ -81,8 +81,8 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
         demoCut.state = boolSetting("demo_cut_hold") ? .on : .off
         freeCamera.frame = NSRect(x: 104, y: 138, width: 140, height: 20)
         freeCamera.state = boolSetting("free_camera") ? .on : .off
-        shopPanel.frame = NSRect(x: 104, y: 112, width: 150, height: 20)
-        shopPanel.state = boolSetting("shop_panel") ? .on : .off
+        extraOverlays.frame = NSRect(x: 104, y: 112, width: 150, height: 20)
+        extraOverlays.state = boolSetting("extra_overlays") ? .on : .off
         let idleLabel = NSTextField(labelWithString: "Title screen idle behavior")
         idleLabel.frame = NSRect(x: 16, y: 82, width: 228, height: 20)
         idle.frame = NSRect(x: 16, y: 54, width: 228, height: 26)
@@ -92,7 +92,7 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let play = NSButton(title: "Play", target: self, action: #selector(play))
         play.frame = NSRect(x: 160, y: 12, width: 88, height: 30)
         play.keyEquivalent = "\r"
-        for view in [smaa, shuffle, unlock, demoCut, freeCamera, shopPanel, idleLabel, idle, play] { window.contentView!.addSubview(view) }
+        for view in [smaa, shuffle, unlock, demoCut, freeCamera, extraOverlays, idleLabel, idle, play] { window.contentView!.addSubview(view) }
 
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -109,7 +109,7 @@ final class Launcher: NSObject, NSApplicationDelegate, NSWindowDelegate {
             "unlock_swimsuits": unlock.state == .on,
             "demo_cut_hold": demoCut.state == .on,
             "free_camera": freeCamera.state == .on,
-            "shop_panel": shopPanel.state == .on,
+            "extra_overlays": extraOverlays.state == .on,
             "title_idle": idleValues[idle.indexOfSelectedItem],
         ]
         do {

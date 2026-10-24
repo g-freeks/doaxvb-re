@@ -2,7 +2,7 @@
 """Check the shop collection log and panel in the running game.
 
 One scripted run (tools/drive_game.py) with RECOMP_COLLECTION_LOG=1 and
-RECOMP_SHOP_PANEL=1: it walks to the Sports Shop, moves the cursor and buys
+RECOMP_EXTRA_OVERLAYS=1: it walks to the Sports Shop, moves the cursor and buys
 an item, and checks the [auto:collection] lines against the [auto:ui] lines
 and against each other. The run's saves are put back afterwards. Prints one
 [auto:check] line per check; the exit code is the number that failed. See
@@ -151,7 +151,7 @@ def main(argv=None):
     try:
         runner, image = drive_game.find_game(root, args.runner, args.xbe)
         env = dict(item.split("=", 1) for item in args.env)
-        env.update(RECOMP_COLLECTION_LOG="1", RECOMP_SHOP_PANEL="1")
+        env.update(RECOMP_COLLECTION_LOG="1", RECOMP_EXTRA_OVERLAYS="1")
         session.start(runner, image, env=env)
         failed = run(session)
     except (DriveError, OSError, ValueError) as error:

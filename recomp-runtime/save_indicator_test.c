@@ -1,8 +1,12 @@
+#ifndef _WIN32
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "save_indicator.h"
 
 #include "overlay_text.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int failures;
@@ -22,9 +26,27 @@ static RecompOverlayText taken(void)
     return text;
 }
 
-int main(void)
+/* Without RECOMP_EXTRA_OVERLAYS=1 the runner's indicator shows nothing. */
+static int check_off(void)
+{
+    recomp_save_indicator_note_begin();
+    check(taken().notice[0] == '\0', "no saving notice without the extra overlays");
+    recomp_save_indicator_note_end();
+    check(taken().notice[0] == '\0', "no saved notice without the extra overlays");
+    if (failures == 0) printf("save indicator off test passed\n");
+    return failures == 0 ? 0 : 1;
+}
+
+int main(int argc, char **argv)
 {
     RecompSaveIndicator indicator = {0};
+
+    if (argc > 1 && strcmp(argv[1], "--off") == 0) return check_off();
+#ifdef _WIN32
+    _putenv_s("RECOMP_EXTRA_OVERLAYS", "1");
+#else
+    setenv("RECOMP_EXTRA_OVERLAYS", "1", 1);
+#endif
 
     check(recomp_save_indicator_notice(&indicator) == RECOMP_SAVE_NOTICE_NONE, "no notice before a save");
     recomp_save_indicator_begin(&indicator);

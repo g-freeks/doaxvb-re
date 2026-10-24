@@ -45,6 +45,11 @@ typedef struct RecompOverlayText {
     bool notice_busy;
 } RecompOverlayText;
 
+/* Whether the player asked for the extra overlays, the shop's ownership
+   panel and the save indicator: the launcher's Extra overlays toggle, or
+   RECOMP_EXTRA_OVERLAYS=1. */
+bool recomp_extra_overlays_enabled(void);
+
 /* Empties the overlay; an empty overlay draws nothing. */
 void recomp_overlay_clear(RecompOverlayText *text);
 void recomp_overlay_set_title(RecompOverlayText *text, const char *title);

@@ -1,8 +1,8 @@
 # Shop collection panel and log
 
 In the game's shops you otherwise learn whether a girl already has an item
-only by pressing X and waiting for her reply. Tick **Collection in shops** in
-the launcher, or set `RECOMP_SHOP_PANEL=1` before the runner starts, and the
+only by pressing X and waiting for her reply. Tick **Extra overlays** in the
+launcher, or set `RECOMP_EXTRA_OVERLAYS=1` before the runner starts, and the
 shops show it over the item preview with the game's own icons:
 
 - Bottom left, for the girl you play: the heart is lit when the item is in

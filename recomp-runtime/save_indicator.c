@@ -4,8 +4,6 @@
 #include "ui_log.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 void recomp_save_indicator_begin(RecompSaveIndicator *indicator)
 {
@@ -44,14 +42,7 @@ static unsigned frame;
 
 static bool enabled(void)
 {
-    static int cache = -1;
-
-    if (cache < 0) {
-        const char *value = getenv("RECOMP_SAVE_INDICATOR");
-
-        cache = value == NULL || strcmp(value, "0") != 0;
-    }
-    return cache != 0;
+    return recomp_extra_overlays_enabled();
 }
 
 /* Shows a changed notice at once: a save runs inside one game frame, and
