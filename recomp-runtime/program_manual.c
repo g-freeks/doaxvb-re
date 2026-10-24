@@ -5,6 +5,7 @@
 #include "body_joints_adapter.h"
 #include "body_morph_adapter.h"
 #include "title_idle.h"
+#include "collection_log.h"
 #include "free_camera_adapter.h"
 #include "viewer_menu_adapter.h"
 #include "controller_settings.h"
@@ -39,6 +40,7 @@
 
 #ifdef RECOMP_FULL_PROGRAM
 void sub_0006AFD0(void);
+void sub_000C8840(void);
 #endif
 void recomp_program_thread_start(void);
 #ifdef RECOMP_FULL_PROGRAM
@@ -337,6 +339,19 @@ static void enter_collection_screen(void)
 }
 #endif
 
+#ifdef RECOMP_FULL_PROGRAM
+/* 0x000C8840: draws one row of the shop list; its second argument is the
+   shop screen's context. Only a code store in the task table reaches it, so
+   this wrapper wins over generated dispatch without a recipe change. It
+   reports the context to the collection log and runs the original
+   unchanged; see docs/collection-log.md. */
+static void shop_row(void)
+{
+    recomp_collection_note_shop(kernel_arg(2));
+    sub_000C8840();
+}
+#endif
+
 RecompFunction recomp_lookup_manual(uint32_t guest_address)
 {
     RecompFunction function = recomp_game_scheduler_lookup_manual(guest_address);
@@ -450,6 +465,11 @@ RecompFunction recomp_lookup_manual(uint32_t guest_address)
     }
     if (function == NULL && guest_address == 0x0017d2a0u) {
         function = sphere_visible;
+    }
+    /* Seam: wraps the generated shop row draw to learn the shop's context;
+       see shop_row and docs/collection-log.md. */
+    if (function == NULL && guest_address == 0x000c8840u) {
+        function = shop_row;
     }
 #endif
     if (function == NULL && guest_address == 0x0018322du) {

@@ -31,7 +31,8 @@ void recomp_overlay_imgui_style(float target_height)
     style.ScaleAllSizes(panel_scale);
 }
 
-void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, float height)
+void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, float height,
+    const RecompOverlayPicture *picture, const ImTextureID *icons)
 {
     const float scale = panel_scale;
     const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs |
@@ -47,7 +48,23 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
         for (unsigned i = 0u; i < text.count; ++i) ImGui::TextUnformatted(text.line[i]);
         ImGui::End();
     }
-    if (text.hint[0] != '\0') {
+    const bool draw_icons = text.icon_count != 0u && picture != nullptr && icons != nullptr;
+    if (draw_icons) {
+        ImDrawList *list = ImGui::GetForegroundDrawList();
+        for (unsigned i = 0u; i < text.icon_count; ++i) {
+            const RecompOverlayIcon &icon = text.icon[i];
+            if (icon.image >= RECOMP_ICON_COUNT || icons[icon.image] == ImTextureID{}) continue;
+            const float size = icon.size * picture->height;
+            const ImVec2 low(picture->x + icon.x * picture->width + icon.shift * picture->height,
+                picture->y + icon.y * picture->height);
+            const ImVec2 high(low.x + size, low.y + size);
+            const float alpha = icon.alpha < 0.0f ? 0.0f : icon.alpha > 1.0f ? 1.0f : icon.alpha;
+            list->AddImage(icons[icon.image], low, high, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f),
+                IM_COL32(255, 255, 255, static_cast<int>(alpha * 255.0f + 0.5f)));
+        }
+    }
+    /* Icons stand in for the hint that describes them. */
+    if (text.hint[0] != '\0' && !draw_icons) {
         ImGui::SetNextWindowPos(ImVec2(width * 0.5f, height - kMargin * scale), 0, ImVec2(0.5f, 1.0f));
         ImGui::Begin("recomp-overlay-hint", nullptr, flags);
         /* Each line of the hint is centred on its own. */

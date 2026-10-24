@@ -126,6 +126,15 @@ class ExtractionTests(unittest.TestCase):
                 (root / "private/launcher.json").write_text(json.dumps(saved))
                 self.assertEqual(saved_launcher_settings(root).get("RECOMP_FREE_CAMERA"), expected)
 
+    def test_saved_shop_panel_setting(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "private").mkdir()
+            for saved, expected in (({}, None), ({"shop_panel": False}, None),
+                                    ({"shop_panel": True}, "1"), ({"shop_panel": "yes"}, None)):
+                (root / "private/launcher.json").write_text(json.dumps(saved))
+                self.assertEqual(saved_launcher_settings(root).get("RECOMP_SHOP_PANEL"), expected)
+
     def test_launch_prerequisites_and_command(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

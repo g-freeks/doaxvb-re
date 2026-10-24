@@ -717,6 +717,8 @@ if(RECOMP_PROGRAM_DIR)
         suit_switch_adapter.c
         overlay_text.c
         unlock_swimsuits.c
+        collection_log.c
+        island_icons.c
         ui_log.c
         d3d_creation_model.c
         d3d_creation_adapter.c
@@ -973,6 +975,8 @@ endif()
 add_executable(recomp_viewer_scene_test viewer_scene.c viewer_scene_test.c)
 add_executable(recomp_suit_switch_test suit_switch.c suit_switch_test.c)
 add_executable(recomp_unlock_swimsuits_test unlock_swimsuits_test.c)
+add_executable(recomp_collection_log_test collection_log_test.c overlay_text.c island_icons.c)
+add_executable(recomp_island_icons_test island_icons_test.c island_icons.c)
 add_executable(recomp_ui_log_test ui_log_test.c)
 add_executable(recomp_animation_skeleton_test animation_skeleton_test.c)
 add_executable(recomp_animation_pose_test animation_pose.c animation_skeleton.c animation_pose_test.c)
@@ -1016,6 +1020,8 @@ add_test(NAME recomp-runtime-suit-switch COMMAND recomp_suit_switch_test)
 add_test(NAME recomp-runtime-title-idle-unexpected-table COMMAND recomp_title_idle_test --unexpected-table)
 add_test(NAME recomp-runtime-title-idle-cpu-exhibition COMMAND recomp_title_idle_test --cpu-exhibition)
 add_test(NAME recomp-runtime-unlock-swimsuits COMMAND recomp_unlock_swimsuits_test)
+add_test(NAME recomp-runtime-collection-log COMMAND recomp_collection_log_test)
+add_test(NAME recomp-runtime-island-icons COMMAND recomp_island_icons_test)
 add_test(NAME recomp-runtime-ui-log COMMAND recomp_ui_log_test)
 add_test(NAME recomp-runtime-title-idle-cut-hold COMMAND recomp_title_idle_test --cut-hold)
 add_test(NAME recomp-runtime-animation-skeleton COMMAND recomp_animation_skeleton_test)
