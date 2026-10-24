@@ -92,7 +92,9 @@ def saved_launcher_settings(root):
                 **({"RECOMP_DEMO_CUT_HOLD": DEMO_CUT_HOLD_SHORT}
                    if settings.get("demo_cut_hold") is True else {}),
                 **({"RECOMP_FREE_CAMERA": "1"}
-                   if settings.get("free_camera") is True else {})}
+                   if settings.get("free_camera") is True else {}),
+                **({"RECOMP_EXTRA_OVERLAYS": "1"}
+                   if settings.get("extra_overlays") is True else {})}
     except (OSError, ValueError, TypeError, AttributeError, OverflowError):
         return {}
 

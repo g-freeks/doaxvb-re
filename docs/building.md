@@ -380,6 +380,15 @@ Set `RECOMP_TITLE_IDLE` to `no-cutscene` or `cpu-exhibition` to change what
 the idle title screen leads to; see [`docs/title-idle.md`](title-idle.md).
 Set `RECOMP_UNLOCK_SWIMSUITS=1` to unlock every swimsuit in Exhibition; see
 [`docs/swimsuit-unlock.md`](swimsuit-unlock.md).
+Set `RECOMP_COLLECTION_LOG=1` to log changes to the girls' item ownership; see
+[`docs/collection-log.md`](collection-log.md).
+Tick **Extra overlays** in the launcher, or set `RECOMP_EXTRA_OVERLAYS=1`, to
+show in the shops, with the game's own icons, which girls already have the
+highlighted item, a **Saved** notice in the bottom right corner after each
+game save, and which button does what in a volleyball match and the Hopping
+game; see [`docs/collection-log.md`](collection-log.md#shop-panel),
+[`docs/save-indicator.md`](save-indicator.md) and
+[`docs/button-hint.md`](button-hint.md).
 Set `RECOMP_AUTO_LOG=1` to log screen and cursor changes for scripts that drive
 the game; see [`docs/ui-log.md`](ui-log.md). `tools/drive_game.py` drives the
 game by those lines; see [`docs/automation.md`](automation.md).

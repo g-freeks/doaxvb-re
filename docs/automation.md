@@ -41,7 +41,7 @@ python tools/drive_game.py stop
 
 `start` and `route` find the runner and game the way `run_game.py` does, from
 the selected build receipt. `--runner` and `--xbe` choose others, and
-`--env NAME=VALUE` adds runner settings such as `RECOMP_SHOP_PANEL=1`.
+`--env NAME=VALUE` adds runner settings such as `RECOMP_EXTRA_OVERLAYS=1`.
 
 **The mark.** `wait`, `until` and the steps built on them look only at log
 lines after the mark. The mark is the line the previous wait matched, or

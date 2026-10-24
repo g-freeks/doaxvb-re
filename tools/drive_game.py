@@ -581,7 +581,7 @@ def main(argv=None):
         command.add_argument("--xbe", type=Path, help="game executable (default: the imported disc's)")
         command.add_argument("--log", type=Path, help="runner log (default: in the session folder)")
         command.add_argument("--env", action="append", default=[], metavar="NAME=VALUE",
-                             help="extra environment for the runner, such as RECOMP_SHOP_PANEL=1")
+                             help="extra environment for the runner, such as RECOMP_EXTRA_OVERLAYS=1")
 
     add_start_options(commands.add_parser("start", help="start the game"))
     route_command = commands.add_parser("route", help="start the game and walk to a screen")

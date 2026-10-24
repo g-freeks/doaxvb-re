@@ -11,10 +11,13 @@
 #include "fiber_adapter.h"
 #endif
 #include "stop_report.h"
+#include "button_hint.h"
+#include "save_indicator.h"
 #include "save_transaction.h"
 #include "title_idle.h"
 #include "unlock_swimsuits.h"
 #include "xbox_memory_layout.h"
+#include "collection_log.h"
 #include "ui_log.h"
 #include "screenshot.h"
 
@@ -435,7 +438,10 @@ void recomp_d3d_swap_adapter(void)
 #ifdef RECOMP_FULL_PROGRAM
     recomp_title_idle_frame();
     recomp_unlock_swimsuits_frame();
+    recomp_collection_log_frame();
     recomp_ui_log_frame();
+    recomp_save_indicator_frame();
+    recomp_button_hint_frame();
     recomp_screenshot_poll_trigger();
     /* Scene state machine at 0x000A3820: 0x5DECE0 is the scene currently
        running and 0x5DED55 is the scene requested for the next iteration.

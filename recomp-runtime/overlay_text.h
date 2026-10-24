@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "island_icons.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,17 +14,71 @@ extern "C" {
    draws whatever it holds when the frame is presented. Plain data, with no
    knowledge of how or where it is drawn. */
 enum {
+    RECOMP_OVERLAY_ICONS = 12,
     RECOMP_OVERLAY_LINES = 8,
     RECOMP_OVERLAY_LINE_SIZE = 96,
     RECOMP_OVERLAY_HINT_SIZE = 320,
+    RECOMP_OVERLAY_KEYS = 8,
+    RECOMP_OVERLAY_KEY_SIZE = 48,
 };
+
+/* An icon from island_icons.h placed over the game's picture. The game
+   stretches its screen across the whole picture, 3:2 or 16:9, so x is a
+   fraction of the picture's width and y of its height; the icon stays
+   square, its size a fraction of the height. The left edge is x plus shift,
+   a fraction of the height: a shift of -size puts the right edge on x, and
+   icons in a row are a size apart whatever the stretch. A label, such as a
+   gift reaction's "++", is drawn beside the icon: to its left when
+   label_left, else to its right. */
+typedef struct RecompOverlayIcon {
+    unsigned image;
+    float x, shift, y, size;
+    float alpha;
+    char label[4];
+    bool label_left;
+} RecompOverlayIcon;
+
+/* A button and what it does: one row of the key panel at the picture's
+   right edge, above the game's subtitles and the notice. image is an
+   island_icons.h button, or RECOMP_ICON_COUNT for none; name stands in for the image when there is none or a presenter
+   cannot draw icons. action is the game's name for it, detail a short
+   explanation. An indented row starts half a button further right, so
+   rows can sit as the buttons do on the pad. */
+typedef struct RecompOverlayKey {
+    unsigned image;
+    bool indent;
+    char name[8];
+    char action[RECOMP_OVERLAY_KEY_SIZE];
+    char detail[RECOMP_OVERLAY_KEY_SIZE];
+} RecompOverlayKey;
+
+/* The key rows, and a small reminder in the picture's bottom left corner:
+   tip_key drawn as a key cap, then tip, such as how to show the rows. */
+typedef struct RecompOverlayKeys {
+    RecompOverlayKey key[RECOMP_OVERLAY_KEYS];
+    unsigned count;
+    char tip_key[8];
+    char tip[RECOMP_OVERLAY_KEY_SIZE];
+} RecompOverlayKeys;
 
 typedef struct RecompOverlayText {
     char title[RECOMP_OVERLAY_LINE_SIZE];
     char line[RECOMP_OVERLAY_LINES][RECOMP_OVERLAY_LINE_SIZE];
     unsigned count;
     char hint[RECOMP_OVERLAY_HINT_SIZE];
+    RecompOverlayIcon icon[RECOMP_OVERLAY_ICONS];
+    unsigned icon_count;
+    /* A short notice in the picture's bottom right corner, such as the
+       save indicator's; busy draws it with a turning mark. */
+    char notice[RECOMP_OVERLAY_LINE_SIZE];
+    bool notice_busy;
+    RecompOverlayKeys keys;
 } RecompOverlayText;
+
+/* Whether the player asked for the extra overlays, the shop's ownership
+   panel and the save indicator: the launcher's Extra overlays toggle, or
+   RECOMP_EXTRA_OVERLAYS=1. */
+bool recomp_extra_overlays_enabled(void);
 
 /* Empties the overlay; an empty overlay draws nothing. */
 void recomp_overlay_clear(RecompOverlayText *text);
@@ -31,12 +87,40 @@ void recomp_overlay_set_title(RecompOverlayText *text, const char *title);
    and long lines are cut. False when the line was dropped. */
 bool recomp_overlay_add_line(RecompOverlayText *text, const char *format, ...);
 void recomp_overlay_set_hint(RecompOverlayText *text, const char *hint);
+/* Adds an icon; false past RECOMP_OVERLAY_ICONS. A presenter that cannot
+   draw icons shows the hint instead, so give icons a hint to fall back on. */
+bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, float shift, float y,
+    float size, float alpha);
+/* Labels the icon added last; nothing when there is none. */
+void recomp_overlay_label_icon(RecompOverlayText *text, const char *label, bool left);
+void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool busy);
+/* Sets the bottom left reminder; empty texts remove it. */
+void recomp_overlay_set_key_tip(RecompOverlayKeys *keys, const char *key, const char *tip);
+/* Adds a key row; false past RECOMP_OVERLAY_KEYS. Long texts are cut. */
+bool recomp_overlay_add_key(RecompOverlayKeys *keys, unsigned image, const char *name, const char *action,
+    const char *detail);
 bool recomp_overlay_empty(const RecompOverlayText *text);
 
 /* The game side hands a finished overlay over once a frame; a presenter,
    possibly on its own thread, takes a copy of the latest one to draw. */
 void recomp_overlay_publish(const RecompOverlayText *text);
 void recomp_overlay_take(RecompOverlayText *text);
+/* A lower-priority overlay, such as the shop's ownership panel: taken only
+   while the overlay published above is empty. Publish an empty one to
+   remove it. */
+void recomp_overlay_publish_status(const RecompOverlayText *text);
+/* The corner notice, kept apart from both overlays above and added to
+   whichever is taken, so it shows over a panel too. NULL or "" removes it. */
+void recomp_overlay_publish_notice(const char *notice, bool busy);
+/* The key panel, kept apart like the notice and added to whichever overlay
+   is taken. An empty one removes it. */
+void recomp_overlay_publish_keys(const RecompOverlayKeys *keys);
+
+/* The images icons refer to, handed over once by the game side, which reads
+   them from the disc; a presenter uploads them when it first draws an icon.
+   NULL until then; they stay valid for the rest of the run. */
+void recomp_overlay_set_icon_images(const RecompIconImage *images);
+const RecompIconImage *recomp_overlay_icon_images(void);
 
 #ifdef __cplusplus
 }

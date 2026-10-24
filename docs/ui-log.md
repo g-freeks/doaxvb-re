@@ -9,6 +9,8 @@ save or game state is changed.
 
 Every line meant for automation starts with `[auto:<source>]`, so a tool can
 pick them out of the runner's other output with `^\[auto:`: `ui` is this log,
+`save` marks the game's saves (see [`save-indicator.md`](save-indicator.md)),
+`hint` what the button hint shows (see [`button-hint.md`](button-hint.md)),
 and `driver` is what `drive_game.py` prints about its own steps. An
 `[auto:ui]` line goes on with `frame N: ` and the event.
 

@@ -4,6 +4,25 @@
 
 ### Added
 
+- **Gift reactions**. With **Extra overlays** (below), the collection panel
+  also shows on the items screen, the hotel's gift screen (with what is
+  inside the present) and the Collection. A left thumbstick click shows
+  beside each girl's portrait how she reacts to the item as a present:
+  `++` love, `+` like, `-` dislike, `--` hate, from the GameFAQs Item
+  Reactions FAQ, matched to the game's item ids. Hidden at first; a small
+  **LS · click: reactions** reminder says how to show it. See
+  `docs/gift-reactions.md`.
+- **Button hint**. With **Extra overlays** (below), a volleyball match you
+  play and the Hopping game show a small **Back · Controls** reminder; Back
+  shows which button does what, with the game's own A, B, X and Y buttons
+  read from the disc, and hides it again. Both follow the layout chosen in
+  Controller Settings, analog or digital; volleyball adds the stick rows.
+  The explanations come from the GameFAQs guides. See `docs/button-hint.md`.
+- **Save indicator**. With **Extra overlays** (below), a small **Saved**
+  notice shows in the bottom right corner for about five seconds after each
+  game save, so you know when quitting keeps your progress. In play the game
+  saved each time the part of the day changed, and not on leaving a shop.
+  See `docs/save-indicator.md`.
 - **Scripted play** (#158). `RECOMP_AUTO_LOG=1` prints an `[auto:ui]` line
   whenever the game changes screen or moves a cursor: menus, the save
   select, the island's places, the part of the day, the shop, the items and
@@ -13,6 +32,16 @@
   night and a new vacation, and puts back any saves a run changes.
   `RECOMP_SCREENSHOT_TRIGGER` lets a script take screenshots. Read-only; off
   by default. See `docs/automation.md` and `docs/ui-log.md`.
+- **Extra overlays**: collection in shops. An opt-in launcher option,
+  **Extra overlays**, or `RECOMP_EXTRA_OVERLAYS=1`, shows in the shops which girls already have the
+  highlighted item, without pressing X and waiting for her reply: the
+  playing girl's heart (in her Collection) and present (in her room) along
+  the bottom of the item preview, and the other girls' portraits down its
+  right edge, using the game's own icons read from the disc. A purchase
+  shows at once. The Direct3D 11 presenter shows the same as text for now.
+  `RECOMP_COLLECTION_LOG=1` logs ownership and inventory changes, and
+  `tools/check_collection.py` checks the log and panel in the running game
+  by script. Read-only; off by default. See `docs/collection-log.md`.
 - **Title screen idle behavior** (#117). A launcher choice, or
   `RECOMP_TITLE_IDLE`, sets what the game does when its title screen is left
   idle. **Default** is the game's own attract sequence. **No cutscene**
