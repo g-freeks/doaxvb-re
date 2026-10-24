@@ -16,18 +16,25 @@ Windows, shows the same as two lines of text along the bottom of the screen
 for now. Everything is read-only: no save or game state is changed.
 
 `RECOMP_COLLECTION_LOG=1` is the diagnostic behind it: the runner prints a
-`[collection]` line to the console whenever the ownership table or a girl's
-inventory changes, and for each item under the shop cursor.
+`[auto:collection]` line to the console whenever the ownership table or a girl's
+inventory changes, for each item under the shop cursor, and whenever the panel
+changes. The `[auto:...]` prefix marks lines that scripts read; see
+[`docs/ui-log.md`](ui-log.md).
 
 ## Log output
 
 ```text
-[collection] frame 1: first read; per girl had/collection: 0(?)=0/0 ... 4(Ayane)=1/0 ...
-[collection] frame 812: item 7 (type 2) girl 4 (Ayane): none -> had+collection
-[collection] frame 2040: 708 items changed; per girl had/collection: ...
-[collection] frame 2040: 408 slots changed; per girl inventory items: ...
-[collection] frame 2702: girl 6 (?) slot 3: empty -> item 590 (type 1, -3, order 4, flags 0x00, wrapping 668)
+[auto:collection] frame 1: first read; per girl had/collection: 0(?)=0/0 ... 4(Ayane)=1/0 ...
+[auto:collection] frame 812: item 7 (type 2) girl 4 (Ayane): none -> had+collection
+[auto:collection] frame 2040: 708 items changed; per girl had/collection: ...
+[auto:collection] frame 2040: 408 slots changed; per girl inventory items: ...
+[auto:collection] frame 2702: girl 6 (?) slot 3: empty -> item 590 (type 1, -3, order 4, flags 0x00, wrapping 668)
+[auto:collection] frame 3884: panel: Ainsel / Had: Ayane  |  In room: Ayane; lit: present
 ```
+
+A `panel:` line, written while the panel is also on, gives the panel's text
+with ` / ` for its line break and the icons it shows lit: `heart`,
+`present` and the other girls' names, or `none`.
 
 When up to 16 items change in one frame, each changed girl and item gets its
 own line, and so does each changed inventory slot. More than that, such as a
@@ -118,7 +125,7 @@ Each time the item under the cursor changes, the log prints it with every
 girl's ownership and whether her inventory holds it:
 
 ```text
-[collection] frame 4380: shop 0 cursor 3: item 163 Oreas (type 2): Tina=none ... Ayane=had+collection ...
+[auto:collection] frame 4380: shop 0 cursor 3: item 163 Oreas (type 2): Tina=none ... Ayane=had+collection ...
 ```
 
 In one shop visit Ayane said she had never seen Ainsel (no bits) and had
@@ -203,3 +210,19 @@ whole-table change, and that guest memory is left unchanged.
 order, the size and format checks, and a missing disc.
 `overlay_text_test.c` checks that the status slot waits while another
 overlay is up.
+
+`tools/check_collection.py` checks the same in the running game, by script
+through [`tools/drive_game.py`](automation.md), with the log and the panel on.
+It walks to the Sports Shop and checks:
+
+- that the save select read the vacation's ownership table;
+- three cursor moves: the collection log names the same item as the
+  `[auto:ui]` shop line, and the panel shows it;
+- a purchase, preferring an item no girl has had: the item goes into the
+  playing girl's room, her had bit comes on, and the panel then lights the
+  present.
+
+It prints one `[auto:check] PASS` or `FAIL` line per check and exits with the
+number that failed. The run's saves are put back afterwards; a purchase stays
+in memory and is not saved. `test_check_collection.py` tests how it reads
+the logs.

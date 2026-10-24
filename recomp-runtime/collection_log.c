@@ -189,7 +189,7 @@ static const char *state_name(unsigned bits)
 
 static void print_summary(const uint16_t *table, const char *what)
 {
-    fprintf(stderr, "[collection] frame %u: %s; per girl had/collection:", frame, what);
+    fprintf(stderr, "[auto:collection] frame %u: %s; per girl had/collection:", frame, what);
     for (unsigned girl = 0; girl < GIRL_COUNT; ++girl) {
         unsigned had = 0, collection = 0;
 
@@ -238,7 +238,7 @@ static void log_ownership(void)
                 if (before != after) {
                     char name[64];
 
-                    fprintf(stderr, "[collection] frame %u: item %u %s (type %u) girl %u (%s): %s -> %s\n",
+                    fprintf(stderr, "[auto:collection] frame %u: item %u %s (type %u) girl %u (%s): %s -> %s\n",
                             frame, id, item_name(id, name, sizeof name), item_type(id), girl,
                             girl_name(girl), state_name(before), state_name(after));
                 }
@@ -250,7 +250,7 @@ static void log_ownership(void)
 
 static void print_inventory_summary(InventorySlot (*inventory)[SLOT_COUNT], const char *what)
 {
-    fprintf(stderr, "[collection] frame %u: %s; per girl inventory items:", frame, what);
+    fprintf(stderr, "[auto:collection] frame %u: %s; per girl inventory items:", frame, what);
     for (unsigned girl = 0; girl < GIRL_COUNT; ++girl) {
         unsigned items = 0;
 
@@ -321,7 +321,7 @@ static void log_inventories(void)
                 if (memcmp(&inventory[girl][slot], &previous_inventory[girl][slot], sizeof(InventorySlot)) == 0) {
                     continue;
                 }
-                fprintf(stderr, "[collection] frame %u: girl %u (%s) slot %u: ", frame, girl, girl_name(girl), slot);
+                fprintf(stderr, "[auto:collection] frame %u: girl %u (%s) slot %u: ", frame, girl, girl_name(girl), slot);
                 print_slot(&previous_inventory[girl][slot]);
                 fputs(" -> ", stderr);
                 print_slot(&inventory[girl][slot]);
@@ -392,7 +392,7 @@ static void log_shop(int item, unsigned shop, unsigned cursor)
 {
     char name[64];
 
-    fprintf(stderr, "[collection] frame %u: shop %u cursor %u: item %d %s (type %u):", frame, shop, cursor,
+    fprintf(stderr, "[auto:collection] frame %u: shop %u cursor %u: item %d %s (type %u):", frame, shop, cursor,
             item, item_name((uint16_t)item, name, sizeof name), item_type((uint16_t)item));
     for (unsigned girl = 0; girl < GIRL_COUNT; ++girl) {
         fprintf(stderr, " %s=%s%s", girl_name(girl), state_name(ownership((uint16_t)item, girl)),
@@ -508,8 +508,45 @@ static void load_icons(void)
     if (recomp_island_icons_load(recomp_disc_root_path, images)) {
         recomp_overlay_set_icon_images(images);
     } else {
-        fprintf(stderr, "[collection] shop panel: the island icons could not be read; showing text\n");
+        fprintf(stderr, "[auto:collection] shop panel: the island icons could not be read; showing text\n");
     }
+}
+
+/* With the log on, one line for what the panel now shows: its text, with
+   " / " for the line break, and which icons are lit, so a script can check
+   the panel without looking at the screen. */
+static void log_panel(const RecompOverlayText *text)
+{
+    char hint[RECOMP_OVERLAY_HINT_SIZE];
+    const char *separator = "";
+    size_t length = 0;
+
+    for (const char *at = text->hint; *at != '\0' && length + 4u < sizeof hint; ++at) {
+        if (*at == '\n') {
+            memcpy(hint + length, " / ", 3);
+            length += 3;
+        } else {
+            hint[length++] = *at;
+        }
+    }
+    hint[length] = '\0';
+    fprintf(stderr, "[auto:collection] frame %u: panel: %s; lit:", frame, length != 0u ? hint : "(empty)");
+    for (unsigned i = 0; i < text->icon_count; ++i) {
+        const RecompOverlayIcon *icon = &text->icon[i];
+
+        if (icon->alpha < 1.0f) {
+            continue;
+        }
+        if (icon->image == RECOMP_ICON_HEART) {
+            fprintf(stderr, "%s heart", separator);
+        } else if (icon->image == RECOMP_ICON_PRESENT) {
+            fprintf(stderr, "%s present", separator);
+        } else {
+            fprintf(stderr, "%s %s", separator, girl_name(icon->image - RECOMP_ICON_PORTRAIT));
+        }
+        separator = ",";
+    }
+    fprintf(stderr, "%s\n", separator[0] == '\0' ? " none" : "");
 }
 
 /* Publishes the panel when it changes, and an empty one once the shop
@@ -528,6 +565,9 @@ static void show_shop_panel(int item)
     if (memcmp(&text, &shown, sizeof text) != 0) {
         recomp_overlay_publish_status(&text);
         shown = text;
+        if (log_enabled()) {
+            log_panel(&text);
+        }
     }
 }
 
