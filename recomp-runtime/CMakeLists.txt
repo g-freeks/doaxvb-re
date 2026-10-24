@@ -720,6 +720,7 @@ if(RECOMP_PROGRAM_DIR)
         collection_log.c
         island_icons.c
         ui_log.c
+        save_indicator.c
         d3d_creation_model.c
         d3d_creation_adapter.c
         d3d_draw_model.c
@@ -978,6 +979,7 @@ add_executable(recomp_unlock_swimsuits_test unlock_swimsuits_test.c)
 add_executable(recomp_collection_log_test collection_log_test.c overlay_text.c island_icons.c)
 add_executable(recomp_island_icons_test island_icons_test.c island_icons.c)
 add_executable(recomp_ui_log_test ui_log_test.c)
+add_executable(recomp_save_indicator_test save_indicator.c save_indicator_test.c overlay_text.c ui_log.c)
 add_executable(recomp_animation_skeleton_test animation_skeleton_test.c)
 add_executable(recomp_animation_pose_test animation_pose.c animation_skeleton.c animation_pose_test.c)
 add_executable(recomp_d3d_pose_replay_test d3d_pose_replay.c d3d_pose_replay_test.c d3d_draw_model.c)
@@ -1023,6 +1025,7 @@ add_test(NAME recomp-runtime-unlock-swimsuits COMMAND recomp_unlock_swimsuits_te
 add_test(NAME recomp-runtime-collection-log COMMAND recomp_collection_log_test)
 add_test(NAME recomp-runtime-island-icons COMMAND recomp_island_icons_test)
 add_test(NAME recomp-runtime-ui-log COMMAND recomp_ui_log_test)
+add_test(NAME recomp-runtime-save-indicator COMMAND recomp_save_indicator_test)
 add_test(NAME recomp-runtime-title-idle-cut-hold COMMAND recomp_title_idle_test --cut-hold)
 add_test(NAME recomp-runtime-animation-skeleton COMMAND recomp_animation_skeleton_test)
 add_test(NAME recomp-runtime-animation-pose COMMAND recomp_animation_pose_test)

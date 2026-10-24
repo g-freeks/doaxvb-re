@@ -388,6 +388,9 @@ highlighted item; see [`docs/collection-log.md`](collection-log.md#shop-panel).
 Set `RECOMP_AUTO_LOG=1` to log screen and cursor changes for scripts that drive
 the game; see [`docs/ui-log.md`](ui-log.md). `tools/drive_game.py` drives the
 game by those lines; see [`docs/automation.md`](automation.md).
+A **Saved** notice shows in the bottom right corner after each game save; set
+`RECOMP_SAVE_INDICATOR=0` to hide it. See
+[`docs/save-indicator.md`](save-indicator.md).
 Tick **Shorter demo cuts** in the launcher, or set `RECOMP_DEMO_CUT_HOLD` from
 1 to 59 to shorten the one-second freeze between the demo's scenes; see
 [`docs/title-idle.md`](title-idle.md#demo-cut-hold).

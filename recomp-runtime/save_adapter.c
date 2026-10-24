@@ -3,6 +3,7 @@
 #ifdef RECOMP_FULL_PROGRAM
 #include "fiber_adapter.h"
 #include "kernel_abi.h"
+#include "save_indicator.h"
 #include "save_transaction.h"
 #include "stop_report.h"
 
@@ -23,6 +24,7 @@ static void save_original(uint32_t address, uint32_t success_value)
         recomp_stop(1, "save:begin:0x%08" PRIx32, address);
         return;
     }
+    recomp_save_indicator_note_begin();
 
     /* Raw dispatch preserves the original ABI and cannot reenter this hook.
        Nested region saves join this fiber's transaction even when the
@@ -37,7 +39,9 @@ static void save_original(uint32_t address, uint32_t success_value)
     }
     if (!recomp_save_end(owner, success)) {
         recomp_stop(1, "save:end:0x%08" PRIx32, address);
+        return;
     }
+    recomp_save_indicator_note_end();
 }
 
 static void save_profile(void)
