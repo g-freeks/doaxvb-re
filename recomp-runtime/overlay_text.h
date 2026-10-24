@@ -39,6 +39,10 @@ typedef struct RecompOverlayText {
     char hint[RECOMP_OVERLAY_HINT_SIZE];
     RecompOverlayIcon icon[RECOMP_OVERLAY_ICONS];
     unsigned icon_count;
+    /* A short notice in the picture's bottom right corner, such as the
+       save indicator's; busy draws it with a turning mark. */
+    char notice[RECOMP_OVERLAY_LINE_SIZE];
+    bool notice_busy;
 } RecompOverlayText;
 
 /* Empties the overlay; an empty overlay draws nothing. */
@@ -52,6 +56,7 @@ void recomp_overlay_set_hint(RecompOverlayText *text, const char *hint);
    draw icons shows the hint instead, so give icons a hint to fall back on. */
 bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, float shift, float y,
     float size, float alpha);
+void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool busy);
 bool recomp_overlay_empty(const RecompOverlayText *text);
 
 /* The game side hands a finished overlay over once a frame; a presenter,
@@ -62,6 +67,9 @@ void recomp_overlay_take(RecompOverlayText *text);
    while the overlay published above is empty. Publish an empty one to
    remove it. */
 void recomp_overlay_publish_status(const RecompOverlayText *text);
+/* The corner notice, kept apart from both overlays above and added to
+   whichever is taken, so it shows over a panel too. NULL or "" removes it. */
+void recomp_overlay_publish_notice(const char *notice, bool busy);
 
 /* The images icons refer to, handed over once by the game side, which reads
    them from the disc; a presenter uploads them when it first draws an icon.

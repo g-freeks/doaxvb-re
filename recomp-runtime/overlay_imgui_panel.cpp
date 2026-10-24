@@ -80,4 +80,28 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
         }
         ImGui::End();
     }
+    if (text.notice[0] != '\0') {
+        /* A pill in the picture's bottom right corner, glass and green like
+           the game's own panels; a busy notice leads with a turning arc. */
+        const RecompOverlayPicture whole{0.0f, 0.0f, width, height};
+        const RecompOverlayPicture &area = picture != nullptr ? *picture : whole;
+        ImDrawList *list = ImGui::GetForegroundDrawList();
+        const ImVec2 size = ImGui::CalcTextSize(text.notice);
+        const float pad = 6.0f * scale;
+        const float mark = text.notice_busy ? size.y + pad : 0.0f;
+        const ImVec2 high(area.x + area.width - kMargin * scale, area.y + area.height - kMargin * scale);
+        const ImVec2 low(high.x - size.x - mark - 3.0f * pad, high.y - size.y - pad);
+        const float round = (high.y - low.y) * 0.5f;
+        list->AddRectFilled(low, high, IM_COL32(5, 15, 26, 170), round);
+        list->AddRect(low, high, IM_COL32(170, 235, 255, 150), round, 0, 1.0f * scale);
+        if (text.notice_busy) {
+            const float radius = size.y * 0.38f;
+            const ImVec2 centre(low.x + 1.5f * pad + size.y * 0.5f, (low.y + high.y) * 0.5f);
+            const float start = static_cast<float>(ImGui::GetTime()) * 6.0f;
+            list->PathArcTo(centre, radius, start, start + 4.2f, 16);
+            list->PathStroke(IM_COL32(90, 255, 140, 255), 0, 2.0f * scale);
+        }
+        list->AddText(ImVec2(low.x + 1.5f * pad + mark, low.y + pad * 0.5f), IM_COL32(90, 255, 140, 255),
+            text.notice);
+    }
 }

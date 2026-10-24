@@ -53,13 +53,22 @@ bool recomp_overlay_add_icon(RecompOverlayText *text, unsigned image, float x, f
     return true;
 }
 
+void recomp_overlay_set_notice(RecompOverlayText *text, const char *notice, bool busy)
+{
+    if (text == NULL) return;
+    copy_text(text->notice, sizeof text->notice, notice);
+    text->notice_busy = text->notice[0] != '\0' && busy;
+}
+
 bool recomp_overlay_empty(const RecompOverlayText *text)
 {
     return text == NULL || (text->title[0] == '\0' && text->count == 0u && text->hint[0] == '\0' &&
-        text->icon_count == 0u);
+        text->icon_count == 0u && text->notice[0] == '\0');
 }
 
 static RecompOverlayText published, status;
+static char notice[RECOMP_OVERLAY_LINE_SIZE];
+static bool notice_busy;
 #ifdef _WIN32
 static volatile LONG published_lock;
 #else
@@ -104,6 +113,14 @@ void recomp_overlay_publish_status(const RecompOverlayText *text)
     unlock();
 }
 
+void recomp_overlay_publish_notice(const char *text, bool busy)
+{
+    lock();
+    copy_text(notice, sizeof notice, text);
+    notice_busy = notice[0] != '\0' && busy;
+    unlock();
+}
+
 static const RecompIconImage *icon_images;
 
 void recomp_overlay_set_icon_images(const RecompIconImage *images)
@@ -127,5 +144,9 @@ void recomp_overlay_take(RecompOverlayText *text)
     if (text == NULL) return;
     lock();
     *text = recomp_overlay_empty(&published) ? status : published;
+    if (notice[0] != '\0') {
+        memcpy(text->notice, notice, sizeof notice);
+        text->notice_busy = notice_busy;
+    }
     unlock();
 }

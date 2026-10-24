@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Save indicator**. A small **Saved** notice shows in the bottom right
+  corner for about five seconds after each game save, so you know when
+  quitting keeps your progress. In play the game saved each time the part of
+  the day changed, and not on leaving a shop. On by default;
+  `RECOMP_SAVE_INDICATOR=0` hides it. See `docs/save-indicator.md`.
 - **Scripted play** (#158). `RECOMP_AUTO_LOG=1` prints an `[auto:ui]` line
   whenever the game changes screen or moves a cursor: menus, the save
   select, the island's places, the part of the day, the shop, the items and
