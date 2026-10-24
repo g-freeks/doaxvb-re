@@ -27,7 +27,9 @@ the actions:
 | Analog | A Attack: spike, serve; tap to tip. B Receive: pass; hard to set. |
 | Digital (the runtime's default) | Each of A, B, X and Y with its action: Attack (Strong) spike, serve, block; Receive (Strong) set at the net; Attack (Soft) tip over a block; Receive (Soft) pass to partner. A button set to none is left out. |
 
-Two stick rows follow: the left stick moves and aims (at the serve, back for
+The button rows go as the buttons sit on the pad: Y, X, B and A from the
+top, with the right-hand Y and B indented. Two stick rows follow, their L
+and R in a ring like the stick's cap: the left stick moves and aims (at the serve, back for
 an underhand serve, forward for a jump serve), the right stick places the
 partner (forward to play the net, back to stay deep). The panel shows while
 the match scene runs with a person playing, and goes when the results menu

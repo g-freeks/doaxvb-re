@@ -38,9 +38,11 @@ typedef struct RecompOverlayIcon {
    right edge, above the game's subtitles and the notice. image is an
    island_icons.h button, or RECOMP_ICON_COUNT for none; name stands in for the image when there is none or a presenter
    cannot draw icons. action is the game's name for it, detail a short
-   explanation. */
+   explanation. An indented row starts half a button further right, so
+   rows can sit as the buttons do on the pad. */
 typedef struct RecompOverlayKey {
     unsigned image;
+    bool indent;
     char name[8];
     char action[RECOMP_OVERLAY_KEY_SIZE];
     char detail[RECOMP_OVERLAY_KEY_SIZE];

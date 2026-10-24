@@ -20,14 +20,29 @@ static const struct {
 
 static const char *const button_names[4] = {"A", "B", "X", "Y"};
 
+/* Rows go as the face buttons sit on the pad, top to bottom: Y, X, B, A,
+   with the right-hand Y and B indented. */
+static const unsigned pad_order[4] = {3, 2, 1, 0};
+
+static bool on_the_right(unsigned button)
+{
+    return button == 1u || button == 3u;
+}
+
+static void add_row(RecompOverlayKeys *keys, unsigned button, const char *action, const char *detail)
+{
+    if (recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON + button, button_names[button], action, detail)) {
+        keys->key[keys->count - 1u].indent = on_the_right(button);
+    }
+}
+
 static void add_button(RecompOverlayKeys *keys, unsigned button, uint8_t action)
 {
     if (action == RECOMP_ACTION_NONE || action >= sizeof actions / sizeof actions[0] ||
         actions[action].action == NULL) {
         return;
     }
-    recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON + button, button_names[button], actions[action].action,
-        actions[action].detail);
+    add_row(keys, button, actions[action].action, actions[action].detail);
 }
 
 /* The Hopping game reuses the digital layout's strength: a button set to a
@@ -38,15 +53,14 @@ static void add_jumps(RecompOverlayKeys *keys, const RecompPadLayout *layout)
     if (layout->analog) {
         recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON, "A", "Jump", "harder jumps farther");
     } else {
-        for (unsigned button = 0; button < 4u; ++button) {
+        for (unsigned i = 0; i < 4u; ++i) {
+            const unsigned button = pad_order[i];
             const uint8_t action = layout->digital[button];
 
             if (action == RECOMP_ACTION_ATTACK_STRONG || action == RECOMP_ACTION_RECEIVE_STRONG) {
-                recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON + button, button_names[button], "Long jump",
-                    "two pads");
+                add_row(keys, button, "Long jump", "two pads");
             } else if (action == RECOMP_ACTION_ATTACK_SOFT || action == RECOMP_ACTION_RECEIVE_SOFT) {
-                recomp_overlay_add_key(keys, RECOMP_ICON_BUTTON + button, button_names[button], "Short jump",
-                    "one pad");
+                add_row(keys, button, "Short jump", "one pad");
             }
         }
     }
@@ -65,10 +79,14 @@ void recomp_button_hint_fill(RecompOverlayKeys *keys, RecompHintGame game, const
         return;
     }
     if (game == RECOMP_HINT_VOLLEYBALL) {
-        if (layout->analog) {
-            for (unsigned button = 0; button < 2u; ++button) add_button(keys, button, layout->analog_ab[button]);
-        } else {
-            for (unsigned button = 0; button < 4u; ++button) add_button(keys, button, layout->digital[button]);
+        for (unsigned i = 0; i < 4u; ++i) {
+            const unsigned button = pad_order[i];
+
+            if (!layout->analog) {
+                add_button(keys, button, layout->digital[button]);
+            } else if (button < 2u) {
+                add_button(keys, button, layout->analog_ab[button]);
+            }
         }
         recomp_overlay_add_key(keys, RECOMP_ICON_COUNT, "L", "Move, aim", "serve: back low, forward jump");
         recomp_overlay_add_key(keys, RECOMP_ICON_COUNT, "R", "Partner", "forward net, back deep");

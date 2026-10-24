@@ -95,6 +95,7 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
         const float button = ImGui::GetTextLineHeight() * 2.0f;
         for (unsigned i = 0u; i < text.keys.count; ++i) {
             const RecompOverlayKey &key = text.keys.key[i];
+            if (key.indent) ImGui::Indent(button * 0.6f);
             if (icons != nullptr && key.image < RECOMP_ICON_COUNT && icons[key.image] != ImTextureID{}) {
                 /* The game's button glyphs fill the middle of their 64-pixel
                    textures, from texel 14 to 53 across. */
@@ -104,6 +105,15 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
                 const ImVec2 at = ImGui::GetCursorScreenPos();
                 const ImVec2 size = ImGui::CalcTextSize(key.name);
                 ImGui::Dummy(ImVec2(button, button));
+                /* A name without an image, such as a thumbstick's L or R,
+                   sits in a ring like the stick's cap, so it does not read
+                   as a shoulder button. */
+                if (key.name[0] != '\0') {
+                    const ImVec2 centre(at.x + button * 0.5f, at.y + button * 0.5f);
+                    ImGui::GetWindowDrawList()->AddCircleFilled(centre, button * 0.42f, IM_COL32(20, 30, 40, 200));
+                    ImGui::GetWindowDrawList()->AddCircle(centre, button * 0.42f, IM_COL32(200, 225, 235, 230), 0,
+                        1.5f * scale);
+                }
                 ImGui::GetWindowDrawList()->AddText(
                     ImVec2(at.x + (button - size.x) * 0.5f, at.y + (button - size.y) * 0.5f),
                     IM_COL32(255, 255, 255, 255), key.name);
@@ -115,6 +125,7 @@ void recomp_overlay_imgui_build(const RecompOverlayText &text, float width, floa
             ImGui::SameLine();
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() + centre);
             ImGui::TextColored(ImVec4(0.85f, 0.92f, 1.0f, 0.8f), "%s", key.detail);
+            if (key.indent) ImGui::Unindent(button * 0.6f);
         }
         ImGui::End();
         ImGui::PopStyleVar();
